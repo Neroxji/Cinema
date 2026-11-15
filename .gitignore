@@ -6,6 +6,10 @@ target/
 *.class
 *.log
 
+# 运行时数据（H2 库文件与日志目录，task-00 要求）
+*.db
+logs/
+
 # 本地环境配置
 application-local.yml
 
