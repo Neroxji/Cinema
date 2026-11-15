@@ -117,7 +117,7 @@
 - **逻辑视图**：按模块 A/B/C 划分三个顶层包（排片管理 / 在线购票 / 订单售后），核心领域对象为 Showing、Seat、TicketOrder、PriceStrategy、QueueRecord；Seat 与 TicketOrder 经 order_item 关联，价格与状态行为以策略/状态接口多态实现。
 - **开发视图**：Maven 单工程，分层 controller / service / repository / model，模块以包边界隔离并各自命名前缀；PlantUML 管理设计图源文件，Git 主干+特性分支协作。
 - **进程视图**：单体单进程（Spring Boot 内嵌 Tomcat），HTTP 请求与 @Scheduled 定时任务同进程，无消息中间件。
-- **物理视图**：演示口径单机单节点——浏览器 → Spring Boot(8080) → MySQL(3306)；备用 H2 文件库内嵌免安装。
+- **物理视图**：容器化部署（docker-compose，2 容器）——浏览器 → **app 容器**（Spring Boot，8080）→ **mysql 容器**（MySQL 8，3306，数据卷持久化）；应用为多阶段镜像（Maven 构建→JRE 运行）。开发期双 profile：H2 文件库内嵌（日常迭代，零容器依赖）/ mysql profile（容器化 MySQL，每道验收门双 profile 复验）；同学部署两路线——有 Docker 用 compose 一键起 2 容器，无 Docker 用 java -jar + 内嵌 H2。部署图（可选交付物）按此 2 节点绘制。
 - **场景视图**：核心场景为 UC204→UC205（锁座支付）、UC302→UC305（退票递补）、UC307（检票核销）、UC105（策略热切换）；顺序图按此 4 条主线绘制，满足"合计≥3 张"要求。
 
 ## 7. 开发补充约定（AI 辅助开发时随 spec 一并下发）
