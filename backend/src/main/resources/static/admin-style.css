@@ -1,0 +1,113 @@
+/* 星辰影城 · 管理端样式（底子取自 prototype/电影票购票系统-前端原型.html，管理端独立文件，不与观众端共享） */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f4f6f9; color: #2c3345; }
+
+/* ---------- 顶栏 ---------- */
+header { background: #1f2a44; color: #fff; padding: 14px 24px 10px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+header h1 { font-size: 18px; font-weight: 600; }
+header .ver { font-size: 12px; opacity: .6; }
+.loginbox { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.loginbox input { width: 130px; padding: 7px 10px; border: none; border-radius: 6px; font-size: 13px; background: rgba(255,255,255,.14); color: #fff; outline: none; }
+.loginbox input::placeholder { color: rgba(255,255,255,.55); }
+.loginbox input:focus { background: #fff; color: #2c3345; }
+.session-tag { font-size: 12px; background: #2fa46b; padding: 4px 10px; border-radius: 14px; }
+nav { width: 100%; display: flex; gap: 8px; flex-wrap: wrap; padding-top: 8px; }
+nav button { background: rgba(255,255,255,.12); color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+nav button.active { background: #4a7dff; }
+nav button.locked { opacity: .45; cursor: not-allowed; }
+
+/* ---------- 页面骨架 ---------- */
+main { max-width: 1080px; margin: 24px auto; padding: 0 16px; }
+section.page { display: none; }
+section.page.active { display: block; }
+.page-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.page-head h2 { font-size: 17px; }
+.badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; color: #fff; }
+.badge.a { background: #4a7dff; } .badge.b { background: #2fa46b; } .badge.c { background: #e8862c; }
+
+.card { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 1px 4px rgba(20,30,60,.08); margin-bottom: 16px; }
+.card h3 { font-size: 14px; margin-bottom: 10px; color: #5a6478; font-weight: 600; }
+
+/* ---------- 提示横幅 / 空态 / 备注 ---------- */
+.banner { border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; line-height: 1.7; word-break: break-all; }
+.banner.err { background: #fdeaea; color: #c0392b; border-left: 4px solid #c0392b; }
+.banner.ok { background: #e3f5ec; color: #1f8a5b; border-left: 4px solid #2fa46b; }
+.authbanner { max-width: 1080px; margin: 14px auto -8px; padding: 10px 16px; font-size: 13px; background: #fff4e0; color: #c07a12; border-left: 4px solid #e8862c; border-radius: 6px; }
+.empty { color: #a0a8ba; font-size: 13px; padding: 10px; }
+.note { font-size: 12px; color: #8a93a6; margin-top: 10px; line-height: 1.7; }
+
+/* ---------- 表单 ---------- */
+.formgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 14px; align-items: end; }
+.formgrid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5a6478; }
+.formgrid .wide { grid-column: 1 / -1; }
+.formgrid input, .formgrid select, .filters select, .inline-block select, .inline-block input { padding: 7px 10px; border: 1px solid #d4daE6; border-radius: 6px; font-size: 13px; background: #fff; color: #2c3345; }
+.formgrid input:focus, .formgrid select:focus { outline: none; border-color: #4a7dff; }
+.formbtns { display: flex; gap: 10px; margin-top: 4px; }
+.inline, .inline-block { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #5a6478; }
+.inline input { width: 90px; padding: 5px 8px; border: 1px solid #d4dae6; border-radius: 6px; font-size: 12px; }
+.subform { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #dfe4ee; }
+#sgParamBox .note { margin-top: 6px; }
+
+/* ---------- 过滤器 ---------- */
+.filters { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 12px; }
+.filters label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5a6478; }
+
+/* ---------- 表格 / 标签 ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 9px 10px; border-bottom: 1px solid #edf0f5; text-align: left; }
+th { color: #8a93a6; font-weight: 500; background: #fafbfd; }
+td.num { font-variant-numeric: tabular-nums; }
+.tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+.tag.paid { background: #e3f5ec; color: #1f8a5b; } .tag.unpaid { background: #fff4e0; color: #c07a12; }
+.tag.refund { background: #fdeaea; color: #c0392b; } .tag.used { background: #e8ecf5; color: #5a6478; }
+.tag.off { background: #eef0f5; color: #8a93a6; }
+
+/* 座位统计小片 */
+.seatstat { display: inline-flex; gap: 6px; font-size: 11px; }
+.seatstat i { font-style: normal; padding: 2px 6px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+.seatstat .free { background: #eef4ff; color: #3d6ce0; }
+.seatstat .locked { background: #fff4e0; color: #c07a12; }
+.seatstat .sold { background: #fdeaea; color: #c0392b; }
+
+/* ---------- 按钮 ---------- */
+.btn { border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-size: 13px; }
+.btn.small { padding: 4px 10px; font-size: 12px; }
+.btn.primary { background: #4a7dff; color: #fff; }
+.btn.danger { background: #fff; color: #c0392b; border: 1px solid #e5b4ae; }
+.btn.ghost { background: transparent; color: #5a6478; border: 1px solid #d4dae6; }
+.btn:disabled { background: #c8cede; cursor: not-allowed; color: #fff; }
+
+/* ---------- 策略卡 ---------- */
+.strategies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.strategy { border: 2px solid #e6e9f0; border-radius: 8px; padding: 14px; cursor: pointer; }
+.strategy.on { border-color: #4a7dff; background: #f5f8ff; }
+.strategy b { display: block; margin-bottom: 6px; font-size: 14px; }
+.strategy span { font-size: 12px; color: #8a93a6; line-height: 1.6; display: block; margin-bottom: 8px; }
+.strategy label { margin: 4px 6px 0 0; }
+
+/* ---------- 检票核销 ---------- */
+.checkin-input { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.checkin-input .radio { font-size: 13px; color: #5a6478; display: inline-flex; align-items: center; gap: 5px; }
+.checkin-input #ckValue { flex: 1; min-width: 220px; padding: 9px 12px; border: 1px solid #d4dae6; border-radius: 6px; font-size: 15px; letter-spacing: 1px; }
+.checkin-input #ckValue:focus { outline: none; border-color: #4a7dff; }
+.ck-result { border-radius: 8px; padding: 16px 18px; font-size: 14px; line-height: 1.9; }
+.ck-result.pass { background: #e3f5ec; border-left: 5px solid #2fa46b; }
+.ck-result.fail { background: #fdeaea; border-left: 5px solid #c0392b; }
+.ck-result.manual { background: #fff4e0; border-left: 5px solid #e8862c; }
+.ck-result .verdict { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.ck-result.pass .verdict { color: #1f8a5b; }
+.ck-result.fail .verdict { color: #c0392b; }
+.ck-result.manual .verdict { color: #c07a12; }
+.ck-result .meta { font-size: 13px; color: #4a5568; }
+.ck-result .meta b { color: #2c3345; }
+
+/* ---------- Toast ---------- */
+#toast { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); background: #1f2a44; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: .3s; pointer-events: none; max-width: 80vw; }
+#toast.show { opacity: .95; }
+
+.hidden { display: none !important; }
+
+@media (max-width: 760px) {
+  .formgrid { grid-template-columns: 1fr 1fr; }
+  .strategies { grid-template-columns: 1fr; }
+}

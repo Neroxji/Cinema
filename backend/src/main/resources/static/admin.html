@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星辰影城 · 管理端</title>
+<link rel="stylesheet" href="admin-style.css">
+</head>
+<body>
+
+<header>
+  <h1>🎬 星辰影城 · 管理端</h1><span class="ver">管理端 v1.0 · 排片员 / 检票员工作台</span>
+  <div class="loginbox" id="loginBox">
+    <span id="sessionTag" class="session-tag hidden"></span>
+    <input type="text" id="loginUser" placeholder="用户名" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="密码" autocomplete="current-password">
+    <button class="btn primary" id="loginBtn">登 录</button>
+    <button class="btn ghost hidden" id="logoutBtn">退 出</button>
+  </div>
+  <nav id="adminNav">
+    <button data-p="p-movies" class="active">① 影片管理</button>
+    <button data-p="p-showings">② 排片管理</button>
+    <button data-p="p-strategy">③ 票价策略</button>
+    <button data-p="p-checkin">④ 检票核销</button>
+  </nav>
+</header>
+
+<div class="authbanner hidden" id="authBanner"></div>
+
+<main>
+
+<!-- ① 影片管理（排片员） -->
+<section class="page active" id="p-movies">
+  <div class="page-head"><h2>影片管理</h2><span class="badge a">模块 A · UC101 新增上架 / UC104 编辑上下架</span>
+    <button class="btn small" onclick="loadMovies()">刷新列表</button></div>
+
+  <div class="banner err hidden" id="movieBanner"></div>
+
+  <div class="card">
+    <h3 id="movieFormTitle">新增影片（创建即上架 ON_SHOW）</h3>
+    <form id="movieForm" class="formgrid" onsubmit="return false;">
+      <label>片名 *<input type="text" id="mvTitle" maxlength="100" placeholder="≤100 字"></label>
+      <label>类型<input type="text" id="mvGenre" maxlength="50" placeholder="科幻 / 动作 / 喜剧…"></label>
+      <label>片长（分钟）<input type="number" id="mvDuration" min="1" placeholder="如 140"></label>
+      <label class="wide">海报地址<input type="text" id="mvPoster" maxlength="255" placeholder="https://…（可空）"></label>
+      <div class="formbtns wide">
+        <button class="btn primary" id="mvSaveBtn" onclick="saveMovie()">保存并上架</button>
+        <button class="btn danger hidden" id="mvUpdateBtn" onclick="updateMovie()">保存修改</button>
+        <button class="btn ghost hidden" id="mvCancelEditBtn" onclick="cancelMovieEdit()">取消编辑</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>影片列表</h3>
+    <table id="movieTable"></table>
+    <p class="empty hidden" id="movieEmpty">暂无影片，先在上方新增一部。</p>
+    <p class="note">注：后端未提供管理端全量影片列表接口，本列表取自 GET /api/movies（仅返回上映中影片）；
+      已下架影片以「本页会话缓存」形式保留展示（页面刷新后不可见，跨会话找回需后端补查询接口）。</p>
+  </div>
+</section>
+
+<!-- ② 排片管理（排片员） -->
+<section class="page" id="p-showings">
+  <div class="page-head"><h2>排片管理</h2><span class="badge a">模块 A · UC103 创建场次 / UC104 取消 · 含座位统计</span>
+    <button class="btn small" onclick="loadShowings()">刷新列表</button></div>
+
+  <div class="banner err hidden" id="showingBanner"></div>
+  <div class="banner ok hidden" id="showingOkBanner"></div>
+
+  <div class="card">
+    <h3>创建场次（座位按影厅模板工厂生成）</h3>
+    <form id="showingForm" class="formgrid" onsubmit="return false;">
+      <label>影片 *<select id="sgMovie"></select></label>
+      <label>影厅 *<select id="sgHall"></select></label>
+      <label>开映时间 *<input type="datetime-local" id="sgStart"></label>
+      <label>票价策略
+        <select id="sgPriceType" onchange="onCreatePriceTypeChange()">
+          <option value="">未配置（默认套用全场原价 · UC103-3a）</option>
+          <option value="ORIGINAL">全场原价 ORIGINAL</option>
+          <option value="MEMBER_DISCOUNT">会员日折扣 MEMBER_DISCOUNT</option>
+          <option value="ZONE_PRICING">分区计价 ZONE_PRICING</option>
+        </select>
+      </label>
+      <div class="wide" id="sgParamBox">
+        <label class="inline">基础价 ¥<input type="number" id="sgBasePrice" step="0.01" min="0.01" value="38.00"></label>
+        <span class="note" id="sgParamHint">priceParams（含 basePrice）始终必填——无价场次不可售；留空策略类型提交可演示 3a 默认原价提示。</span>
+      </div>
+      <div class="wide formbtns">
+        <button class="btn primary" onclick="createShowing()">创建场次</button>
+        <button class="btn ghost" onclick="toggleHallForm()">新建影厅</button>
+      </div>
+    </form>
+    <div id="hallFormBox" class="subform hidden">
+      <h3>新建影厅（UC102 · 座位模板由工厂固定：IMAX 5×10=50 / 普通 6×8=48）</h3>
+      <form class="formgrid" onsubmit="return false;">
+        <label>影厅名称 *<input type="text" id="hallName" maxlength="50" placeholder="如 3号厅"></label>
+        <label>影厅类型 *
+          <select id="hallType">
+            <option value="IMAX">IMAX（5 排×10 列，2~4 排黄金区）</option>
+            <option value="STANDARD">普通厅 STANDARD（6 排×8 列，不分区）</option>
+          </select>
+        </label>
+        <div class="wide formbtns"><button class="btn primary" onclick="createHall()">创建影厅</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>排片列表（GET /api/admin/showings · 按开映时间升序）</h3>
+    <div class="filters">
+      <label>影片 <select id="fltMovie"><option value="">全部</option></select></label>
+      <label>影厅 <select id="fltHall"><option value="">全部</option></select></label>
+      <label>状态
+        <select id="fltStatus">
+          <option value="">全部</option>
+          <option value="PUBLISHED">已发布</option>
+          <option value="CANCELED">已取消</option>
+          <option value="FINISHED">已结束</option>
+        </select>
+      </label>
+      <button class="btn small primary" onclick="loadShowings()">查询</button>
+    </div>
+    <table id="showingTable"></table>
+    <p class="empty hidden" id="showingEmpty">没有符合条件的场次。</p>
+    <p class="note">注：影厅下拉项取自排片数据中出现的影厅 + 本页新建影厅（后端无影厅列表查询接口）。</p>
+  </div>
+</section>
+
+<!-- ③ 票价策略（排片员） -->
+<section class="page" id="p-strategy">
+  <div class="page-head"><h2>票价策略配置</h2><span class="badge a">模块 A · UC105 策略模式 · 即时生效</span>
+    <button class="btn small" onclick="initStrategyPage()">刷新场次</button></div>
+
+  <div class="banner err hidden" id="strategyBanner"></div>
+  <div class="banner ok hidden" id="strategyOkBanner"></div>
+
+  <div class="card">
+    <h3>选择场次</h3>
+    <label class="inline-block">场次 <select id="stShowing" onchange="onStrategyShowingChange()"></select></label>
+    <p class="note" id="stCurrent">当前策略：—</p>
+  </div>
+
+  <div class="card">
+    <h3>策略档位（三选一，参数约定见字段表）</h3>
+    <div class="strategies">
+      <div class="strategy on" data-type="ORIGINAL" onclick="pickStrategy('ORIGINAL')">
+        <b>全场原价 ORIGINAL</b>
+        <span>所有座位统一按基础价计价，不叠加折扣。</span>
+        <label class="inline">基础价 ¥<input type="number" id="stOriginalBase" step="0.01" min="0.01" value="38.00" onclick="event.stopPropagation()"></label>
+      </div>
+      <div class="strategy" data-type="MEMBER_DISCOUNT" onclick="pickStrategy('MEMBER_DISCOUNT')">
+        <b>会员日折扣 MEMBER_DISCOUNT</b>
+        <span>全场按统一折扣系数计价（系数 ∈ (0,1) 开区间）。</span>
+        <label class="inline">基础价 ¥<input type="number" id="stMemberBase" step="0.01" min="0.01" value="40.00" onclick="event.stopPropagation()"></label>
+        <label class="inline">折扣<input type="number" id="stMemberDiscount" step="0.01" min="0.01" max="0.99" value="0.80" onclick="event.stopPropagation()"></label>
+      </div>
+      <div class="strategy" data-type="ZONE_PRICING" onclick="pickStrategy('ZONE_PRICING')">
+        <b>分区计价 ZONE_PRICING</b>
+        <span>IMAX 厅第 2~4 排黄金区一档、其余普通区一档（普通厅不分区）。</span>
+        <label class="inline">黄金区 ¥<input type="number" id="stGolden" step="0.01" min="0.01" value="45.00" onclick="event.stopPropagation()"></label>
+        <label class="inline">普通区 ¥<input type="number" id="stNormal" step="0.01" min="0.01" value="35.00" onclick="event.stopPropagation()"></label>
+      </div>
+    </div>
+    <div class="formbtns"><button class="btn primary" onclick="applyStrategy()">应用策略到所选场次</button></div>
+  </div>
+
+  <div class="card">
+    <h3>示例价格预览（UC105-4 · examplePrices）</h3>
+    <table id="examplePriceTable"></table>
+    <p class="empty" id="exampleEmpty">尚未应用策略——应用后此处展示服务端返回的示例价预览。</p>
+    <p class="note">说明：策略保存后即时生效；已出票订单金额为 price_snapshot 快照，切换策略不影响既有订单。</p>
+  </div>
+</section>
+
+<!-- ④ 检票核销（检票员） -->
+<section class="page" id="p-checkin">
+  <div class="page-head"><h2>检票核销</h2><span class="badge c">模块 C · UC307 · 仅 CHECKER 角色 · 幂等核销</span></div>
+
+  <div class="banner err hidden" id="checkinBanner"></div>
+
+  <div class="card">
+    <h3>扫码 / 手输核销凭据</h3>
+    <div class="checkin-input">
+      <label class="radio"><input type="radio" name="ckMode" value="pickupCode" checked onchange="onCkModeChange()"> 取票码（8 位数字）</label>
+      <label class="radio"><input type="radio" name="ckMode" value="orderNo" onchange="onCkModeChange()"> 订单号（B 开头 22 位）</label>
+      <input type="text" id="ckValue" maxlength="22" placeholder="输入 8 位取票码，如 86420195" autocomplete="off">
+      <button class="btn primary" id="ckBtn" onclick="doCheckin()">核 销</button>
+    </div>
+    <p class="note">规则：仅「已出票（ISSUED）」订单可核销；开映超过 30 分钟转人工（13009）；重复核销幂等拒绝（13008）。</p>
+  </div>
+
+  <div class="card hidden" id="ckResultCard">
+    <h3>核销结果</h3>
+    <div id="ckResult"></div>
+  </div>
+
+  <div class="card">
+    <h3>本页核销记录（会话内）</h3>
+    <table id="ckLogTable"></table>
+    <p class="empty hidden" id="ckLogEmpty">暂无核销记录。</p>
+    <p class="note">注：后端核销记录以应用日志与订单状态为准（checkin 接口无列表查询）；本表仅为本页会话内操作留痕。</p>
+  </div>
+</section>
+
+</main>
+<div id="toast"></div>
+
+<script src="admin-app.js"></script>
+</body>
+</html>
