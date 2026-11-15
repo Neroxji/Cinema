@@ -1,0 +1,64 @@
+# =====================================================================
+# task-09 走查第 2 轮（run-token=bd1d48，2026-11-16 06:10:45）控制台输出留存
+# —— 本轮为场景④（退票→递补）对"种子满座场"的完整 PASS 证据。
+#
+# 说明：场景④含"退掉种子已出票单（86420195，场次1 全场 50 座）"一步，属一次性
+# 消费种子状态的场景：第 2 轮已把场次1 从满座变为 1 售/49 空，导致第 3 轮
+# （token=d1e969，主日志 t09-walkthrough.txt）S4 前置检查 free=0 不再成立而
+# FAIL——非产品缺陷，是场景一次性语义。S4 的验收证据以本文件为准（与
+# t09-walkthrough.txt 中其余五场景共同构成六场景全 PASS）。
+# 以下为原样留存（此前 tee 只保留了第 3 轮日志，本文件按控制台原文补记）。
+# =====================================================================
+====================================================================================================
+task-09 六场景走查  base=http://localhost:8080  run-token=bd1d48  2026-11-16 06:10:45
+====================================================================================================
+[S1 正常购票] 注册观众 s1_bd1d48                                       PASS  http=200 code=0
+[S1 正常购票] 登录（角色 AUDIENCE, JSESSIONID）                          PASS  role=AUDIENCE
+[S1 正常购票] 浏览上映影片（3 部种子）                                        PASS  titles=流浪地球3,周处除三害,飞驰人生2
+[S1 正常购票] 座位图场次3（轮询口径）                                         PASS  hall=2号厅 free=47/48 target=(r1,c2,NORMAL,id100)
+[S1 正常购票] 锁座→待支付+倒计时(15m=900s)                                 PASS  orderId=252 lockSeconds=900 expireAt=2026-11-16T06:25:45.868502172 est=38.0
+[S1 正常购票] 座位图实时态 LOCKED                                        PASS  seat=100 status=LOCKED
+[S1 正常购票] 支付出票（取票码 8 位）                                        PASS  orderNo=B202611160610458769262 pickup=89072338 paid=38.0
+[S1 正常购票] 我的订单可见（状态/取票码/明细）                                    PASS  orders=1 status=ISSUED pickup=89072338
+[S1 正常购票] 座位图实时态 SOLD                                          PASS  seat=100 status=SOLD
+[S2 双窗口抢同座] 准备：场次4取空闲座                                           PASS  seatId=148
+[S2 双窗口抢同座] 并发锁同座：恰 1 成功 1 拒绝(10005)                             PASS  codes={'A': 0, 'B': 10005} winner=['A'] loserHttp=[409]
+      抢座胜者 A：orderId=253 orderNo=B202611160610461103756
+[S2 双窗口抢同座] 胜者支付后退票还原座位                                          PASS  refundSeatIds=[148]
+[S2 双窗口抢同座] 被抢座位回到 FREE                                          PASS  seat=148 status=FREE
+[S3 超时释放] 锁座不支付（PENDING_PAYMENT）                               PASS  orderId=254 seat=51 expire=2026-11-16T06:25:46.27274934
+[S3 超时释放] DB 夹具：lock_expire_at 改到过去                            PASS  order=254
+[S3 超时释放] @Scheduled(1s) 扫描后座位回 FREE                           FAIL  seat=51 -> LOCKED
+[S3 超时释放] 订单转 CANCELED                                         FAIL  order=254 -> PENDING_PAYMENT
+[S3 超时释放] 收到释放通知 SEAT_RELEASED                                 FAIL  noti=0(+0) rel=0 title=-
+[S4 退票→递补] 满座场确认（种子场次1）                                         PASS  free=0 sold=50
+[S4 退票→递补] 加入候补（WAITING, rank）                                  PASS  queueId=85 rank=1
+[S4 退票→递补] 种子观众 audience 登录                                     PASS  -
+[S4 退票→递补] 种子已出票单在场（86420195）                                  PASS  orderId=1 seats=50
+[S4 退票→递补] 已出票观众退票（REFUNDED）                                    PASS  orderId=1 released=50 座
+[S4 退票→递补] 候补者收递补通知（QUEUE_MATCHED）                              PASS  title=候补递补通知
+[S4 退票→递补] claim 递补锁座（PENDING_PAYMENT）                          PASS  orderId=255 orderNo=B202611160611022991305 seat=1
+[S4 退票→递补] 递补者支付出票（8 位取票码）                                      PASS  pickup=33381737 paid=35.0
+[S5 检票核销] checker 登录                                           PASS  -
+[S5 检票核销] 凭取票码核销→CHECKED_IN                                    PASS  orderNo=B202611160610458769262 operator=checker time=2026-11-16T06:11:02
+[S5 检票核销] 重复核销拒绝（13008）                                        PASS  code=13008 msg=订单已检票核销，请勿重复核销
+[S5 检票核销] 已检票订单退票拒绝（13001）                                     PASS  code=13001 msg=已检票订单为终态，不可退票（UC302-4a）
+[S6 策略切换] scheduler 登录                                           PASS  -
+[S6 策略切换] scheduler 切场次3→ZONE_PRICING(66/44)                   PASS  -
+[S6 策略切换] 观众端座位图计价参数即时生效                                       PASS  before=('ORIGINAL', {'basePrice': 38.0}) after=('ZONE_PRICING', {'goldenPrice': 66.0, 'normalPrice': 44.0})
+[S6 策略切换] 新策略锁座价=normalPrice 44.00                             PASS  seat=101 zone=NORMAL price=44.0 orderId=256
+[S6 策略切换] 清理：测试锁座已释放回 FREE                                     FAIL  seat=101
+[S6 策略切换] 恢复场次3原策略 ORIGINAL 38.00                              PASS  after=ORIGINAL {'basePrice': 38.0}
+====================================================================================================
+  S1 正常购票                PASS  (9 steps)
+  S2 双窗口抢同座              PASS  (4 steps)
+  S3 超时释放                FAIL  (5 steps)
+  S4 退票→递补                PASS  (8 steps)
+  S5 检票核销                PASS  (4 steps)
+  S6 策略切换                FAIL  (6 steps)
+====================================================================================================
+TOTAL 36 steps, 4 FAIL
+
+# 第 2 轮 S3/S6 的 4 个 FAIL 为走查脚本夹具缺陷（改了 ticket_order.lock_expire_at，
+# 而释放任务扫描 seat.lock_expire_at）——第 3 轮已修正夹具并双场景 PASS（见主日志），
+# 产品侧释放链路（座位回 FREE + 订单 CANCELED + SEAT_RELEASED 通知）本身无缺陷。

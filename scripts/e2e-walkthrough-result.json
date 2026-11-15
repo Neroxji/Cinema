@@ -1,0 +1,199 @@
+{
+ "token": "d1e969",
+ "results": [
+  [
+   "S1 正常购票",
+   "注册观众 s1_d1e969",
+   true,
+   "http=200 code=0"
+  ],
+  [
+   "S1 正常购票",
+   "登录（角色 AUDIENCE, JSESSIONID）",
+   true,
+   "role=AUDIENCE"
+  ],
+  [
+   "S1 正常购票",
+   "浏览上映影片（3 部种子）",
+   true,
+   "titles=流浪地球3,周处除三害,飞驰人生2"
+  ],
+  [
+   "S1 正常购票",
+   "座位图场次3（轮询口径）",
+   true,
+   "hall=2号厅 free=45/48 target=(r1,c4,NORMAL,id102)"
+  ],
+  [
+   "S1 正常购票",
+   "锁座→待支付+倒计时(15m=900s)",
+   true,
+   "orderId=257 lockSeconds=900 expireAt=2026-11-16T06:26:45.67136215 est=38.0"
+  ],
+  [
+   "S1 正常购票",
+   "座位图实时态 LOCKED",
+   true,
+   "seat=102 status=LOCKED"
+  ],
+  [
+   "S1 正常购票",
+   "支付出票（取票码 8 位）",
+   true,
+   "orderNo=B202611160611456761450 pickup=36969964 paid=38.0"
+  ],
+  [
+   "S1 正常购票",
+   "我的订单可见（状态/取票码/明细）",
+   true,
+   "orders=1 status=ISSUED pickup=36969964"
+  ],
+  [
+   "S1 正常购票",
+   "座位图实时态 SOLD",
+   true,
+   "seat=102 status=SOLD"
+  ],
+  [
+   "S2 双窗口抢同座",
+   "准备：场次4取空闲座",
+   true,
+   "seatId=148"
+  ],
+  [
+   "S2 双窗口抢同座",
+   "并发锁同座：恰 1 成功 1 拒绝(10005)",
+   true,
+   "codes={'A': 0, 'B': 10005} winner=['A'] loserHttp=[409]"
+  ],
+  [
+   "S2 双窗口抢同座",
+   "胜者支付后退票还原座位",
+   true,
+   "refundSeatIds=[148]"
+  ],
+  [
+   "S2 双窗口抢同座",
+   "被抢座位回到 FREE",
+   true,
+   "seat=148 status=FREE"
+  ],
+  [
+   "S3 超时释放",
+   "锁座不支付（PENDING_PAYMENT）",
+   true,
+   "orderId=259 seat=52 expire=2026-11-16T06:26:46.006682911"
+  ],
+  [
+   "S3 超时释放",
+   "DB 夹具：seat/order 的 lock_expire_at 改到过去",
+   true,
+   "order=259 seat=52"
+  ],
+  [
+   "S3 超时释放",
+   "@Scheduled(1s) 扫描后座位回 FREE",
+   true,
+   "seat=52 -> FREE"
+  ],
+  [
+   "S3 超时释放",
+   "订单转 CANCELED",
+   true,
+   "order=259 -> CANCELED"
+  ],
+  [
+   "S3 超时释放",
+   "收到释放通知 SEAT_RELEASED",
+   true,
+   "noti=1(+1) rel=1 title=座位锁定已释放"
+  ],
+  [
+   "S4 退票→递补",
+   "满座场确认（种子场次1）",
+   false,
+   "free=49 sold=1"
+  ],
+  [
+   "S4 退票→递补",
+   "加入候补（WAITING, rank）",
+   false,
+   "queueId=None rank=None"
+  ],
+  [
+   "S5 检票核销",
+   "checker 登录",
+   true,
+   "-"
+  ],
+  [
+   "S5 检票核销",
+   "凭取票码核销→CHECKED_IN",
+   true,
+   "orderNo=B202611160611456761450 operator=checker time=2026-11-16T06:11:47"
+  ],
+  [
+   "S5 检票核销",
+   "重复核销拒绝（13008）",
+   true,
+   "code=13008 msg=订单已检票核销，请勿重复核销"
+  ],
+  [
+   "S5 检票核销",
+   "已检票订单退票拒绝（13001）",
+   true,
+   "code=13001 msg=已检票订单为终态，不可退票（UC302-4a）"
+  ],
+  [
+   "S6 策略切换",
+   "scheduler 登录",
+   true,
+   "-"
+  ],
+  [
+   "S6 策略切换",
+   "scheduler 切场次3→ZONE_PRICING(66/44)",
+   true,
+   "-"
+  ],
+  [
+   "S6 策略切换",
+   "观众端座位图计价参数即时生效",
+   true,
+   "before=('ORIGINAL', {'basePrice': 38.0}) after=('ZONE_PRICING', {'goldenPrice': 66.0, 'normalPrice': 44.0})"
+  ],
+  [
+   "S6 策略切换",
+   "新策略锁座价=normalPrice 44.00",
+   true,
+   "seat=103 zone=NORMAL price=44.0 orderId=260"
+  ],
+  [
+   "S6 策略切换",
+   "清理：测试锁座已释放回 FREE",
+   true,
+   "seat=103"
+  ],
+  [
+   "S6 策略切换",
+   "恢复场次3原策略 ORIGINAL 38.00",
+   true,
+   "after=ORIGINAL {'basePrice': 38.0}"
+  ]
+ ],
+ "fail": [
+  [
+   "S4 退票→递补",
+   "满座场确认（种子场次1）",
+   false,
+   "free=49 sold=1"
+  ],
+  [
+   "S4 退票→递补",
+   "加入候补（WAITING, rank）",
+   false,
+   "queueId=None rank=None"
+  ]
+ ]
+}

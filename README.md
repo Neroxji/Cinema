@@ -53,6 +53,9 @@ docker compose down
 
 - compose 项目名固定为 `cinema`，容器名为 `cinema-mysql-1` / `cinema-app-1`；app 通过服务名 `mysql:3306` 连库（容器间不可用 localhost），profile 为 `mysql`，启动时自动重放 `schema.sql`（全表 IF NOT EXISTS 幂等）并由 DataSeeder 播种，重复 up 不产生重复数据。
 - compose 的 mysql 与独立常驻容器 `cinema-mysql` 共用同一数据卷 `cinema-mysql-data`，两套路线看到同一份数据。
+- 因为该卷是由独立常驻容器先创建（卷名显式指定、不带 compose 项目前缀），`docker compose up` 时会打印一条
+  `volume "cinema-mysql-data" already exists but was not created by Docker Compose` 的 **warning——属预期提示而非错误**，
+  数据照常挂载；如不希望看到该提示，可在 compose 的 `volumes:` 段给卷加 `external: true`（需保证常驻容器已先创建过该卷）。
 - 应用镜像多阶段构建：`backend/Dockerfile`（阶段 1 `maven:3.9-eclipse-temurin-17` 编译，阶段 2 `eclipse-temurin:17-jre` 运行）；`.dockerignore` 已排除 `target/`、`data/`、`logs/` 等本地垃圾。镜像源拉取失败时可把 FROM 镜像加国内前缀（如 `docker.m.daocloud.io/library/...`）。
 
 ## 路线 B：无 Docker —— JDK17 + Maven + java -jar（H2 文件档）
