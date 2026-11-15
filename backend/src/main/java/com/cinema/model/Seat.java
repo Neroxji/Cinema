@@ -2,6 +2,7 @@ package com.cinema.model;
 
 import com.cinema.model.enums.SeatState;
 import com.cinema.model.enums.SeatZone;
+import com.cinema.model.state.SeatStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,6 +27,8 @@ import java.time.LocalDateTime;
  *   <li>唯一索引 uk_seat_showing_pos(showing_id, row_num, col_num)：同场次同位置唯一</li>
  *   <li>lock_expire_at / lock_user_id：锁定截止时间与锁定人（spec §4 已确认字段名）</li>
  * </ul>
+ *
+ * <p>// @Pattern: State(状态模式,Context角色=本实体，状态对象见 model/state), @UseCase: UC204/205/206
  */
 @Entity
 @Table(name = "seat")
@@ -142,5 +145,45 @@ public class Seat {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    // ===================== task-03 追加：State 模式委托（transient 行为，不参与持久化映射） =====================
+
+    /**
+     * 状态处理器（Context 角色入口）：按当前 status 分派到 model/state 下对应状态对象。
+     * 一切状态迁移必须经状态对象校验合法性，非法迁移抛 IllegalStateTransitionException（spec §3.2）。
+     */
+    public SeatStatus statusHandler() {
+        return SeatStatus.of(status);
+    }
+
+    /** 选座锁定（UC204-4 选座 / UC305 候补递补——同一 lock 事件）：写锁定人与截止时间，version+1。 */
+    public void lock(Long userId, LocalDateTime lockExpireAt) {
+        statusHandler().lock(this, userId, lockExpireAt);
+    }
+
+    /** 支付出票（UC205-5，task-04 调用）：锁定→已售并清空锁定字段（明细快照由出票服务生成）。 */
+    public void sell() {
+        statusHandler().sell(this);
+    }
+
+    /** 锁定超时释放（UC206）：释放前复查（仍锁定且已过期）后回空闲并清空锁定字段。 */
+    public void releaseOnTimeout(LocalDateTime now) {
+        statusHandler().releaseOnTimeout(this, now);
+    }
+
+    /** 观众主动放弃（UC204）：复查仍被本人锁定后回空闲并清空锁定字段。 */
+    public void releaseByAbandon(Long userId) {
+        statusHandler().releaseByAbandon(this, userId);
+    }
+
+    /** 退票释放（UC302-5，task-05 调用）：已售→空闲（广播释放事件/候补检查由服务层编排）。 */
+    public void releaseByRefund() {
+        statusHandler().releaseByRefund(this);
+    }
+
+    /** 改签释放（UC303，task-05 调用）：已售→空闲，原场次座位释放后新场次重新走锁座流程。 */
+    public void releaseByChange() {
+        statusHandler().releaseByChange(this);
     }
 }

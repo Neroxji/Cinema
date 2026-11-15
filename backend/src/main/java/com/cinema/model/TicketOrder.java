@@ -1,6 +1,7 @@
 package com.cinema.model;
 
 import com.cinema.model.enums.OrderState;
+import com.cinema.model.state.OrderStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,6 +22,8 @@ import java.time.LocalDateTime;
  *
  * <p>状态机（5 态，spec §3.1）与改签/退票/核销行为由 task-03/05 实现；
  * 改签历史由 change_from_showing_id 字段承载（spec 已确认砍掉备忘录模式）。
+ *
+ * <p>// @Pattern: State(状态模式,Context角色=本实体，状态对象见 model/state), @UseCase: UC205/302/307
  */
 @Entity
 @Table(name = "ticket_order")
@@ -155,5 +158,45 @@ public class TicketOrder {
 
     public void setChangeFromShowingId(Long changeFromShowingId) {
         this.changeFromShowingId = changeFromShowingId;
+    }
+
+    // ===================== task-03 追加：State 模式委托（transient 行为，不参与持久化映射） =====================
+
+    /**
+     * 状态处理器（Context 角色入口）：按当前 status 分派到 model/state 下对应状态对象。
+     * 一切状态迁移必须经状态对象校验合法性，非法迁移抛 IllegalStateTransitionException（spec §3.1 行8）。
+     */
+    public OrderStatus statusHandler() {
+        return OrderStatus.of(status);
+    }
+
+    /** 支付成功（UC205，task-04 调用）：待支付→已出票并记录支付时间；座位→已售/广播出票事件由服务层编排。 */
+    public void pay(LocalDateTime payTime) {
+        statusHandler().pay(this, payTime);
+    }
+
+    /** 支付失败（UC205-3a）：待支付自环保持不变（座位维持锁定至倒计时结束）。 */
+    public void payFailed() {
+        statusHandler().payFailed(this);
+    }
+
+    /** 锁定超时（UC206）/观众主动放弃（UC204）：待支付→已取消；座位→空闲/广播释放事件由服务层编排。 */
+    public void cancel() {
+        statusHandler().cancel(this);
+    }
+
+    /** 检票核销（UC307，task-05 调用）：已出票→已检票（终态）并记录核销时间；操作员记录由核销服务承载。 */
+    public void checkIn(LocalDateTime checkinTime) {
+        statusHandler().checkIn(this, checkinTime);
+    }
+
+    /** 退票（UC302，task-05 调用）：已出票→已退票（终态）；座位→空闲/退款/广播释放事件由服务层编排。 */
+    public void refund() {
+        statusHandler().refund(this);
+    }
+
+    /** 改签（UC303，task-05 调用）：已出票自迁移（指向新场次），留存改签来源；每单限 1 次校验属 UC303 业务规则。 */
+    public void changeShowing(Long newShowingId) {
+        statusHandler().changeShowing(this, newShowingId);
     }
 }
