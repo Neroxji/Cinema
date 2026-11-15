@@ -1,0 +1,78 @@
+# =====================================================================
+# 电影票在线购票系统 · 全局配置（task-01 公共底座）
+# 默认档 = H2 演示档（NFR3：一键启动，冷启动至可演示状态 ≤60 秒）
+# 正式档 = MySQL：--spring.profiles.active=mysql（配置见文件底部 mysql profile）
+# =====================================================================
+server:
+  port: 8080
+
+spring:
+  datasource:
+    # H2 内存库，MySQL 兼容模式。参数说明：
+    #   MODE=MySQL                      —— MySQL 方言兼容（反引号/AUTO_INCREMENT/DATETIME 等）
+    #   DATABASE_TO_LOWER=TRUE          —— 标识符统一小写，对齐 MySQL 习惯
+    #   CASE_INSENSITIVE_IDENTIFIERS=TRUE —— 标识符大小写不敏感，对齐 MySQL 语义
+    #   DB_CLOSE_DELAY=-1               —— 连接空闲期间保留库（演示/测试期防误清）
+    url: "jdbc:h2:mem:cinema;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1"
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  sql:
+    init:
+      # 演示档建表方式：SQL init 直接执行 classpath:schema.sql。
+      # 选择 SQL init 而非 ddl-auto 的理由：与 MySQL 正式档共用同一份手写 DDL（单一事实源），
+      # 且本卡要求建表 SQL 必须在 H2 上实际执行验证——SQL init 恰好构成该验证环节。
+      mode: always
+      schema-locations: classpath:schema.sql
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # 表结构一律由 schema.sql 承载（演示/正式档共用），JPA 不自动建表、不校验
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+
+# =====================================================================
+# 购票业务可配置项（NFR2：修改配置不需改代码；由 BookingConfig 单例承载）
+# =====================================================================
+cinema:
+  booking:
+    # 座位锁定时长（UC204-4）：演示档 30 秒；正式档 mysql profile 覆盖为 15 分钟
+    lock-duration: 30s
+    # 候补递补响应时限（UC305）：3 分钟，超时未确认则过期并顺延下一位
+    queue-response-limit: 3m
+    # 退票截止（UC302-4b）：开映前 2 小时后不再受理退票
+    refund-deadline: 2h
+    # 模拟支付失败率（UC205-3）：0=必成功 / 1=必失败 / (0,1) 区间=按概率随机
+    pay-fail-rate: 0.0
+    # 单笔订单最多选座数（UC204-3）
+    max-seats-per-order: 4
+
+---
+# ===================== MySQL 正式档（profile: mysql） =====================
+# 启动：java -jar cinema-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=mysql
+# 建库（注意 utf8mb4）：
+#   CREATE DATABASE cinema DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+# 建表：执行 src/main/resources/schema.sql（本 profile 已关闭 SQL init 自动执行，防误覆盖）
+spring:
+  config:
+    activate:
+      on-profile: mysql
+  datasource:
+    # 时区与编码参数齐备：serverTimezone=Asia/Shanghai、useUnicode+characterEncoding=utf8
+    url: "jdbc:mysql://localhost:3306/cinema?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: "change-me"
+  sql:
+    init:
+      # 正式档不自动执行建表脚本，由 DBA/运维执行 schema.sql
+      mode: never
+
+cinema:
+  booking:
+    # 正式档锁定时长 15 分钟（NFR2 双档：演示 30s / 正式 15m，仅配置差异）
+    lock-duration: 15m
