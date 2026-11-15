@@ -27,9 +27,25 @@ public enum ErrorCode {
     /** 资源不存在（订单/场次/影片等 id 无效）。 */
     NOT_FOUND(10004, "资源不存在", HttpStatus.NOT_FOUND),
     /** 座位已被占用（并发锁座失败的统一提示，UC204-4a；HTTP 409 冲突）。 */
-    SEAT_OCCUPIED(10005, "座位已被占用，请刷新座位图后重试", HttpStatus.CONFLICT);
+    SEAT_OCCUPIED(10005, "座位已被占用，请刷新座位图后重试", HttpStatus.CONFLICT),
 
-    // ---------- A 模块段 11xxx（预留：排片与票价，task-02 起新增） ----------
+    // ---------- A 模块段 11xxx（排片与票价，task-02 启用） ----------
+    /** 影片不存在（UC104 编辑/上下架与 UC103 创建场次时 id 无效）。 */
+    MOVIE_NOT_FOUND(11001, "影片不存在", HttpStatus.NOT_FOUND),
+    /** 影厅时段冲突：同影厅已有 PUBLISHED 场次与新建场次时间区间重叠（UC103-2a）。 */
+    HALL_TIME_CONFLICT(11002, "该影厅该时段已有场次，请重选时间", HttpStatus.CONFLICT),
+    /** 票价策略参数非法：折扣系数∉(0,1)、分区价≤0、参数缺失等（UC105-3a / UC103-3）。 */
+    INVALID_STRATEGY_PARAM(11003, "票价策略参数非法", HttpStatus.BAD_REQUEST),
+    /** 场次存在已售/锁定座位，禁止取消（UC104 / 测试计划 I14；锁定中一并保守拒绝）。 */
+    SHOWING_CANCEL_FORBIDDEN(11004, "场次存在已售或锁定中的座位，禁止取消", HttpStatus.CONFLICT),
+    /** 场次不存在（UC104 取消 / UC105 策略配置时 id 无效）。 */
+    SHOWING_NOT_FOUND(11005, "场次不存在", HttpStatus.NOT_FOUND),
+    /** 场次当前状态不允许取消（非 PUBLISHED，如已取消/已结束）。 */
+    SHOWING_NOT_CANCELABLE(11006, "场次当前状态不允许取消", HttpStatus.CONFLICT),
+    /** 影片已下架，终止创建场次（UC103-5a）。 */
+    MOVIE_OFF_SHOW(11007, "影片已下架，无法创建场次", HttpStatus.CONFLICT),
+    /** 影厅不存在（UC103 创建场次时 id 无效）。 */
+    HALL_NOT_FOUND(11008, "影厅不存在", HttpStatus.NOT_FOUND);
     // ---------- B 模块段 12xxx（预留：在线购票） ----------
     // ---------- C 模块段 13xxx（预留：订单售后与通知） ----------
 
