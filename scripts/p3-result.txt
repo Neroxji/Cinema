@@ -1,0 +1,18 @@
+# P3 · H2 档冷启动计时原始记录（task-08，测试计划 §5 P3 / NFR3：一键启动至可演示 ≤60s）
+# 方法（任务卡口径）：临时目录 H2 起 jar（工作目录 /d/tools/p3run，库文件 data/booking.mv.db 落临时目录，不污染仓库演示库）；
+#   进程启动（date +%s%N 计时起点）→ 轮询 GET /api/movies：连接成功后先 POST /api/auth/login（scheduler）取会话，
+#   再轮询至首个 HTTP 200 为计时终点；每轮间隔 50ms。连跑 3 次。
+# 冷启动口径：3 次均在启动前删除临时库文件（rm -rf data）后计时——第 1 次满足"删临时库文件保证冷启动"要求，
+#   3 次同口径（全部为无库文件冷启动）使样本可比性更强，覆盖并严于任务卡要求。
+# 服务：java -jar backend/target/cinema-backend-0.1.0-SNAPSHOT.jar --server.port=8080
+# 执行时间：2026-11-16 05:12~05:14（3 连跑）
+
+trial 1: 15977 ms
+trial 2: 15832 ms
+trial 3: 16556 ms
+
+max     : 16556 ms
+
+判定：max 16556ms = 16.6s ≤ 60s（NFR3）→ PASS
+
+EXIT_CODE=0
