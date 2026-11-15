@@ -1,0 +1,33 @@
+# =====================================================================
+# MySQL 正式档（profile: mysql）· task-01C 环境契约冻结
+# 启动：java -jar cinema-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=mysql
+#
+# 配套常驻库（task-01C 交付物 1）：Docker 容器 cinema-mysql
+#   MySQL 8 · host 3306 · root/cinema2026 · 库 cinema
+#   服务器级 utf8mb4 + utf8mb4_unicode_ci · TZ=Asia/Shanghai
+#   数据卷 cinema-mysql-data（持久化，重启不丢）
+#
+# compose 部署（仓库根 docker-compose.yml）时，由环境变量
+#   SPRING_DATASOURCE_URL/USERNAME/PASSWORD 把本文件中的 localhost 覆盖为
+#   服务名 mysql:3306（容器间不可用 localhost 互访）。
+# =====================================================================
+spring:
+  datasource:
+    # 时区与编码参数齐备：serverTimezone=Asia/Shanghai、useUnicode+characterEncoding=utf8
+    url: "jdbc:mysql://localhost:3306/cinema?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: "cinema2026"
+
+  sql:
+    init:
+      # task-01C：正式档同样由 SQL init 重放 classpath:schema.sql（单一事实源）。
+      # schema.sql 全表 CREATE TABLE IF NOT EXISTS 幂等，适配持久卷——
+      # 容器/持久库重复启动不炸"表已存在"，compose 一键起即自动建表。
+      mode: always
+      schema-locations: classpath:schema.sql
+
+cinema:
+  booking:
+    # 正式档锁定时长 15 分钟（NFR2 双档：演示档 30s / 正式档 15m，仅配置差异）
+    lock-duration: 15m
