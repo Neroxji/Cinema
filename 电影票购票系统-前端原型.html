@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>电影票购票系统 · 前端原型 v0.1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f4f6f9; color: #2c3345; }
+  header { background: #1f2a44; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header .ver { font-size: 12px; opacity: .6; }
+  nav { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  nav button { background: rgba(255,255,255,.12); color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  nav button.active { background: #4a7dff; }
+  .navgroup { font-size: 11px; color: rgba(255,255,255,.45); align-self: center; padding: 0 2px; }
+  main { max-width: 1080px; margin: 24px auto; padding: 0 16px; }
+  section.page { display: none; }
+  section.page.active { display: block; }
+  .page-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .page-head h2 { font-size: 17px; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; color: #fff; }
+  .badge.a { background: #4a7dff; } .badge.b { background: #2fa46b; } .badge.c { background: #e8862c; }
+  .card { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 1px 4px rgba(20,30,60,.08); margin-bottom: 16px; }
+  .card h3 { font-size: 14px; margin-bottom: 10px; color: #5a6478; font-weight: 600; }
+  .grid-movies { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .movie { border: 1px solid #e6e9f0; border-radius: 8px; overflow: hidden; }
+  .poster { height: 150px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 26px; font-weight: 700; letter-spacing: 2px; }
+  .movie .info { padding: 10px 12px; }
+  .movie .info b { font-size: 14px; }
+  .movie .info p { font-size: 12px; color: #8a93a6; margin-top: 4px; }
+  .movie button { width: calc(100% - 24px); margin: 0 12px 12px; padding: 8px; border: none; border-radius: 6px; background: #4a7dff; color: #fff; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #edf0f5; text-align: left; }
+  th { color: #8a93a6; font-weight: 500; background: #fafbfd; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+  .tag.paid { background: #e3f5ec; color: #1f8a5b; } .tag.unpaid { background: #fff4e0; color: #c07a12; }
+  .tag.refund { background: #fdeaea; color: #c0392b; }
+  .tag.used { background: #e8ecf5; color: #5a6478; }
+  .btn { border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-size: 13px; }
+  .btn.small { padding: 4px 10px; font-size: 12px; }
+  .btn.primary { background: #4a7dff; color: #fff; }
+  .btn.danger { background: #fff; color: #c0392b; border: 1px solid #e5b4ae; }
+  .btn:disabled { background: #c8cede; cursor: not-allowed; }
+  /* 座位图 */
+  .screen { text-align: center; color: #b7bfd0; font-size: 12px; margin-bottom: 6px; }
+  .screen-line { height: 4px; width: 70%; margin: 0 auto 18px; background: linear-gradient(#dfe4ee, #f4f6f9); border-radius: 50%; }
+  #seatMap { display: grid; grid-template-columns: repeat(10, 34px); gap: 8px; justify-content: center; }
+  .seat { width: 34px; height: 30px; border-radius: 6px 6px 3px 3px; border: 1px solid #cfd6e4; background: #fff; cursor: pointer; font-size: 10px; color: #9aa3b5; }
+  .seat:hover { border-color: #4a7dff; }
+  .seat.selected { background: #2fa46b; border-color: #2fa46b; color: #fff; }
+  .seat.locked  { background: #f0ad4e; border-color: #f0ad4e; color: #fff; cursor: not-allowed; }
+  .seat.sold    { background: #d9534f; border-color: #d9534f; color: #fff; cursor: not-allowed; }
+  .legend { display: flex; gap: 18px; justify-content: center; margin-top: 14px; font-size: 12px; color: #8a93a6; }
+  .legend i { display: inline-block; width: 14px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .paybar { display: flex; align-items: center; gap: 16px; margin-top: 16px; justify-content: center; }
+  .timer { font-size: 18px; font-weight: 700; color: #e8862c; min-width: 60px; }
+  .tips { font-size: 12px; color: #8a93a6; background: #f6f8fc; border-left: 3px solid #4a7dff; padding: 8px 12px; border-radius: 4px; margin-top: 12px; line-height: 1.7; }
+  /* 策略 */
+  .strategies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .strategy { border: 2px solid #e6e9f0; border-radius: 8px; padding: 14px; cursor: pointer; }
+  .strategy.on { border-color: #4a7dff; background: #f5f8ff; }
+  .strategy b { display: block; margin-bottom: 6px; font-size: 14px; }
+  .strategy span { font-size: 12px; color: #8a93a6; line-height: 1.6; display: block; }
+  /* 通知 */
+  .notice { border-left: 3px solid #2fa46b; background: #f7fbf9; padding: 10px 14px; border-radius: 4px; margin-bottom: 10px; font-size: 13px; }
+  .notice b { display: block; margin-bottom: 3px; }
+  .notice time { font-size: 11px; color: #a0a8ba; }
+  #toast { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); background: #1f2a44; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: .3s; pointer-events: none; }
+  #toast.show { opacity: .95; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎬 星辰影城 · 在线购票系统</h1><span class="ver">前端原型 v0.1 · 面向对象课程项目</span>
+  <nav>
+    <span class="navgroup">观众端</span>
+    <button data-p="p1" class="active">① 影片列表</button>
+    <button data-p="p2">② 选座购票</button>
+    <button data-p="p3">③ 我的订单</button>
+    <button data-p="p6">④ 通知中心</button>
+    <span class="navgroup">管理端</span>
+    <button data-p="p7">⑤ 影片管理</button>
+    <button data-p="p4">⑥ 排片管理</button>
+    <button data-p="p5">⑦ 票价策略</button>
+    <button data-p="p8">⑧ 检票核销</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ① 影片列表 · 模块B -->
+<section class="page active" id="p1">
+  <div class="page-head"><h2>正在热映</h2><span class="badge b">模块 B · 在线购票核心 · 成员1</span></div>
+  <div class="card">
+    <div class="grid-movies">
+      <div class="movie"><div class="poster" style="background:#3d5a80">流浪地球3</div>
+        <div class="info"><b>流浪地球3</b><p>科幻 / 162分钟 / IMAX厅</p></div>
+        <button onclick="goto('p2')">选座购票</button></div>
+      <div class="movie"><div class="poster" style="background:#7b4a8f">长安三万里</div>
+        <div class="info"><b>长安三万里</b><p>动画 / 168分钟 / 3号厅</p></div>
+        <button onclick="goto('p2')">选座购票</button></div>
+      <div class="movie"><div class="poster" style="background:#2f7a5d">奥本海默</div>
+        <div class="info"><b>奥本海默</b><p>传记 / 180分钟 / 1号厅</p></div>
+        <button onclick="goto('p2')">选座购票</button></div>
+      <div class="movie"><div class="poster" style="background:#a85632">热辣滚烫</div>
+        <div class="info"><b>热辣滚烫</b><p>喜剧 / 129分钟 / 2号厅</p></div>
+        <button onclick="goto('p2')">选座购票</button></div>
+    </div>
+  </div>
+  <div class="card"><h3>今日场次（点开任意影片进入）</h3>
+    <table><tr><th>时间</th><th>影厅</th><th>语言</th><th>票价</th><th>状态</th></tr>
+      <tr><td>14:30</td><td>IMAX厅</td><td>中文 2D</td><td>¥45 起</td><td><span class="tag paid">可售</span></td></tr>
+      <tr><td>19:00</td><td>IMAX厅</td><td>原声 3D</td><td>¥55 起</td><td><span class="tag paid">可售</span></td></tr>
+      <tr><td>21:30</td><td>1号厅</td><td>中文 2D</td><td>¥35 起</td><td><span class="tag unpaid">余票紧张</span></td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ② 选座购票 · 模块B（核心页面） -->
+<section class="page" id="p2">
+  <div class="page-head"><h2>流浪地球3 · 今日 19:00 · IMAX厅</h2><span class="badge b">模块 B · 锁座并发核心 · 成员1</span></div>
+  <div class="card">
+    <div class="screen">银 幕</div><div class="screen-line"></div>
+    <div id="seatMap"></div>
+    <div class="legend">
+      <span><i style="border:1px solid #cfd6e4"></i>可售</span>
+      <span><i style="background:#2fa46b"></i>已选中</span>
+      <span><i style="background:#f0ad4e"></i>他人锁定中</span>
+      <span><i style="background:#d9534f"></i>已售</span>
+    </div>
+    <div class="paybar">
+      <span>已选：<b id="picked">未选择</b></span>
+      <span>合计：<b id="total" style="color:#e8862c">¥0</b></span>
+      <span class="timer" id="timer">--:--</span>
+      <label style="font-size:12px;color:#8a93a6"><input type="checkbox" id="fast"> 30秒演示模式（模拟锁定超时释放）</label>
+      <button class="btn primary" id="payBtn" onclick="doPay()" disabled>模拟支付</button>
+    </div>
+    <div class="tips">💡 <b>答辩演示脚本：</b>本页面再开一个无痕窗口并排显示 → 窗口A选中 C5、C6 → 窗口B刷新看到座位变黄（并发锁生效）→ A 不支付，倒计时归零座位自动回灰（超时释放，延迟消息/定时任务落点）→ 重新选中并支付 → 红色已售。全程对应报告的状态机 + 乐观锁三层防线章节。</div>
+  </div>
+</section>
+
+<!-- ③ 我的订单 · 模块C -->
+<section class="page" id="p3">
+  <div class="page-head"><h2>我的订单</h2><span class="badge c">模块 C · 订单售后与通知 · 成员3</span></div>
+  <div class="card">
+    <table id="orderTable">
+      <tr><th>订单号</th><th>影片/场次</th><th>座位</th><th>金额</th><th>状态</th><th>操作</th></tr>
+    </table>
+    <p id="emptyOrder" style="color:#a0a8ba;font-size:13px;padding:10px">暂无订单，去「选座购票」下一单试试（支付成功后自动出现在这里）。</p>
+  </div>
+  <div class="tips" style="margin:0">💡 退票按钮触发：座位释放 + 状态机流转（已出票→已退票）+ 观察者广播通知（见⑥）。改签用命令模式实现，可撤销。</div>
+</section>
+
+<!-- ④ 排片管理 · 模块A -->
+<section class="page" id="p4">
+  <div class="page-head"><h2>排片管理（管理端）</h2><span class="badge a">模块 A · 排片与票价 · 成员2</span></div>
+  <div class="card">
+    <button class="btn primary" style="margin-bottom:10px" onclick="toast('演示原型：新增排片接口未接')">+ 新增排片</button>
+    <table>
+      <tr><th>影片</th><th>影厅</th><th>日期</th><th>场次</th><th>座位模板</th><th>操作</th></tr>
+      <tr><td>流浪地球3</td><td>IMAX厅</td><td>11-16</td><td>19:00</td><td>10×5（分区计价）</td><td><button class="btn small danger">下架</button></td></tr>
+      <tr><td>长安三万里</td><td>3号厅</td><td>11-16</td><td>15:40</td><td>8×6（统一价）</td><td><button class="btn small danger">下架</button></td></tr>
+      <tr><td>奥本海默</td><td>1号厅</td><td>11-17</td><td>20:10</td><td>10×5（分区计价）</td><td><button class="btn small danger">下架</button></td></tr>
+    </table>
+  </div>
+  <div class="tips" style="margin:0">💡 影厅座位模板用<b>工厂模式</b>按影厅类型生成（IMAX 10×5 分区 / 小厅 8×6 统一价）。</div>
+</section>
+
+<!-- ⑤ 影片管理 · 模块A -->
+<section class="page" id="p7">
+  <div class="page-head"><h2>影片管理（管理端）</h2><span class="badge a">模块 A · 排片与票价 · 成员2</span></div>
+  <div class="card">
+    <button class="btn primary" style="margin-bottom:10px" onclick="toast('演示原型：新增影片接口未接')">+ 上架新片</button>
+    <table>
+      <tr><th>影片</th><th>类型/时长</th><th>放映厅</th><th>状态</th><th>操作</th></tr>
+      <tr><td>流浪地球3</td><td>科幻 / 162min</td><td>IMAX厅</td><td><span class="tag paid">上映中</span></td><td><button class="btn small danger">下架</button></td></tr>
+      <tr><td>长安三万里</td><td>动画 / 168min</td><td>3号厅</td><td><span class="tag paid">上映中</span></td><td><button class="btn small danger">下架</button></td></tr>
+      <tr><td>奥本海默</td><td>传记 / 180min</td><td>1号厅</td><td><span class="tag unpaid">待上映</span></td><td><button class="btn small primary">上映</button></td></tr>
+    </table>
+  </div>
+  <div class="tips" style="margin:0">💡 影片/影厅/座位模板三张基础表归模块 A 维护，购票端只读——读写分离的权限边界就是用例图里两个 Actor 的依据。</div>
+</section>
+
+<!-- ⑧ 检票核销 · 模块C -->
+<section class="page" id="p8">
+  <div class="page-head"><h2>检票核销（管理端 · 检票员）</h2><span class="badge c">模块 C · 订单状态机闭环 · 成员3</span></div>
+  <div class="card">
+    <p id="emptyCheckin" style="color:#a0a8ba;font-size:13px;padding:10px">暂无待检票订单（订单页已预置一张 NO1001 可直接核销）。</p>
+    <table id="checkinTable"></table>
+  </div>
+  <div class="tips" style="margin:0">💡 核销把订单推入终态：待支付 → 已出票 → <b>已检票</b> / 已退票。票据生命周期从此闭环，答辩讲状态图时这就是"完整状态机"的证据。</div>
+</section>
+
+<!-- ⑤ 票价策略 · 模块A -->
+<section class="page" id="p5">
+  <div class="page-head"><h2>票价策略配置</h2><span class="badge a">模块 A · 策略模式落点 · 成员2</span></div>
+  <div class="card">
+    <div class="strategies">
+      <div class="strategy on" onclick="setStrategy(this,0)"><b>普通日 · 全场原价</b><span>边排 ¥35 / 中间排 ¥45<br>不叠加任何折扣</span></div>
+      <div class="strategy" onclick="setStrategy(this,1)"><b>会员日 · 全场 8 折</b><span>统一折扣系数 0.8<br>每周三生效</span></div>
+      <div class="strategy" onclick="setStrategy(this,2)"><b>分区计价 · 黄金区上浮</b><span>中间 4 排为黄金区<br>¥45 → ¥55，其余不变</span></div>
+    </div>
+    <h3 style="margin-top:14px">价格实时预览（回到②选座可见新价格）</h3>
+    <table>
+      <tr><th>座位区</th><th>当前策略</th><th>票价</th></tr>
+      <tr><td>边排（A/B/E 排）</td><td id="sa">普通日 · 原价</td><td id="pa">¥35</td></tr>
+      <tr><td>中间排（C/D 排）</td><td id="sb">普通日 · 原价</td><td id="pb">¥45</td></tr>
+    </table>
+  </div>
+  <div class="tips" style="margin:0">💡 三种策略可运行时切换、互不影响——这是<b>策略模式</b>的活演示：新增"节假日价"只需加一个策略类，不改旧代码（开闭原则的答辩素材）。</div>
+</section>
+
+<!-- ⑥ 通知中心 · 模块C -->
+<section class="page" id="p6">
+  <div class="page-head"><h2>通知中心</h2><span class="badge c">模块 C · 观察者模式落点 · 成员3</span></div>
+  <div class="card" id="noticeList">
+    <div class="notice"><b>🎉 欢迎使用</b>出票、退票、候补递补成功时，通知会出现在这里。<time>系统消息</time></div>
+  </div>
+  <div class="tips" style="margin:0">💡 下游订阅者：站内通知 / 短信 / 大屏，用<b>观察者模式</b>广播，新增一个通知渠道 = 新增一个订阅者类，不改业务代码。</div>
+</section>
+
+</main>
+<div id="toast"></div>
+
+<script>
+/* ---------------- 导航 ---------------- */
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => goto(b.dataset.p));
+function goto(id){
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.p === id));
+  document.querySelectorAll('section.page').forEach(s => s.classList.toggle('active', s.id === id));
+}
+
+/* ---------------- 模块B：座位/锁座/支付 ---------------- */
+const ROWS = ['A','B','C','D','E'], COLS = 10;
+const MID = ['C','D'];                      // 中间排（分区计价演示）
+let seats = [], selected = new Set(), timer = null, remain = 0, strategy = 0, orderSeq = 1001;
+const PRE_LOCKED = ['C4','B6'], PRE_SOLD = ['D7','A3','E2'];   // 预置演示状态
+
+function basePrice(r){ return MID.includes(r) ? 45 : 35; }
+function price(r){
+  if (strategy === 1) return +(basePrice(r) * 0.8).toFixed(0);      // 会员日 8 折
+  if (strategy === 2) return MID.includes(r) ? 55 : 35;             // 黄金区上浮
+  return basePrice(r);
+}
+function initSeats(){
+  seats = [];
+  ROWS.forEach(r => { for (let c = 1; c <= COLS; c++){
+    const id = r + c;
+    seats.push({ id, row:r, status: PRE_LOCKED.includes(id) ? 'locked' : PRE_SOLD.includes(id) ? 'sold' : 'free' });
+  }});
+}
+function renderSeats(){
+  const m = document.getElementById('seatMap'); m.innerHTML = '';
+  seats.forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'seat ' + (selected.has(s.id) ? 'selected' : s.status);
+    b.textContent = s.id;
+    b.title = '¥' + price(s.row);
+    if (s.status === 'free' || selected.has(s.id))
+      b.onclick = () => toggleSeat(s.id);
+    m.appendChild(b);
+  });
+  const list = [...selected].sort();
+  document.getElementById('picked').textContent = list.length ? list.join('、') : '未选择';
+  document.getElementById('total').textContent = '¥' +
+    list.reduce((t,id) => t + price(seats.find(s=>s.id===id).row), 0);
+  document.getElementById('payBtn').disabled = !list.length;
+}
+function toggleSeat(id){
+  const s = seats.find(x => x.id === id);
+  if (selected.has(id)) { selected.delete(id); }
+  else if (s.status === 'free') { selected.add(id); startTimer(); }
+  renderSeats();
+}
+function startTimer(){
+  if (timer) return;
+  remain = document.getElementById('fast').checked ? 30 : 900;    // 正式15分钟，演示30秒
+  timer = setInterval(() => {
+    remain--;
+    const t = document.getElementById('timer');
+    t.textContent = String(Math.floor(remain/60)).padStart(2,'0') + ':' + String(remain%60).padStart(2,'0');
+    if (remain <= 0){                                             // 锁定超时 → 释放
+      clearInterval(timer); timer = null; selected.clear();
+      t.textContent = '--:--';
+      toast('⏰ 锁定超时，座位已自动释放（观察者已广播）');
+      renderSeats();
+    }
+  }, 1000);
+}
+function doPay(){
+  if (!selected.size) return;
+  clearInterval(timer); timer = null;
+  const list = [...selected].sort();
+  const total = list.reduce((t,id) => t + price(seats.find(s=>s.id===id).row), 0);
+  list.forEach(id => seats.find(s => s.id === id).status = 'sold');
+  const o = { id:'NO' + orderSeq++, seats:list.join('、'), total, status:'已出票' };
+  orders.unshift(o); renderOrders();
+  notify('🎟️ 出票成功', `订单 ${o.id} · ${o.seats} · ¥${o.total}（观察者 → 站内/短信/大屏）`);
+  selected.clear();
+  document.getElementById('timer').textContent = '--:--';
+  renderSeats();
+  toast('✅ 模拟支付成功，已出票');
+}
+
+/* ---------------- 模块C：订单/退票/通知 ---------------- */
+let orders = [{ id: 'NO1001', seats: 'D7', total: 45, status: '已出票' }];
+function renderOrders(){
+  const tb = document.getElementById('orderTable');
+  tb.innerHTML = '<tr><th>订单号</th><th>影片/场次</th><th>座位</th><th>金额</th><th>状态</th><th>操作</th></tr>';
+  document.getElementById('emptyOrder').style.display = orders.length ? 'none' : 'block';
+  orders.forEach(o => {
+    const tr = document.createElement('tr');
+    const cls = o.status === '已出票' ? 'paid' : o.status === '已检票' ? 'used' : 'refund';
+    tr.innerHTML = `<td>${o.id}</td><td>流浪地球3 · 19:00</td><td>${o.seats}</td><td>¥${o.total}</td>
+      <td><span class="tag ${cls}">${o.status}</span></td>
+      <td>${o.status === '已出票' ? `<button class="btn small danger" onclick="refund('${o.id}')">退票</button>` : '-'}</td>`;
+    tb.appendChild(tr);
+  });
+  renderCheckin();
+}
+function renderCheckin(){
+  const tb = document.getElementById('checkinTable');
+  tb.innerHTML = '<tr><th>订单号</th><th>影片/场次</th><th>座位</th><th>状态</th><th>操作</th></tr>';
+  const list = orders.filter(o => o.status === '已出票');
+  document.getElementById('emptyCheckin').style.display = list.length ? 'none' : 'block';
+  list.forEach(o => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${o.id}</td><td>流浪地球3 · 19:00</td><td>${o.seats}</td>
+      <td><span class="tag paid">已出票 · 待入场</span></td>
+      <td><button class="btn small primary" onclick="doCheckin('${o.id}')">核销入场</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function doCheckin(id){
+  const o = orders.find(x => x.id === id);
+  o.status = '已检票';
+  renderOrders();
+  notify('🎫 检票通过', `订单 ${id} 核销成功，状态流转：已出票 → 已检票（票据生命周期闭环）`);
+  toast('✅ 验票通过，欢迎入场');
+}
+function refund(id){
+  const o = orders.find(x => x.id === id);
+  o.status = '已退票';
+  o.seats.split('、').forEach(sid => { const s = seats.find(x => x.id === sid); if (s) s.status = 'free'; });
+  renderOrders(); renderSeats();
+  notify('↩️ 退票成功', `订单 ${id} 已退款，座位已释放；候补队列第 1 位已收到递补通知`);
+  toast('退票成功（命令模式：30分钟内可撤销）');
+}
+function notify(title, text){
+  const n = document.createElement('div');
+  n.className = 'notice';
+  n.innerHTML = `<b>${title}</b>${text}<time>刚刚</time>`;
+  document.getElementById('noticeList').prepend(n);
+}
+
+/* ---------------- 模块A：策略 ---------------- */
+function setStrategy(el, idx){
+  document.querySelectorAll('.strategy').forEach(s => s.classList.remove('on'));
+  el.classList.add('on'); strategy = idx;
+  const names = ['普通日 · 原价', '会员日 · 8折', '分区计价 · 黄金区上浮'];
+  document.getElementById('sa').textContent = names[idx];
+  document.getElementById('sb').textContent = names[idx];
+  document.getElementById('pa').textContent = '¥' + price('A');
+  document.getElementById('pb').textContent = '¥' + price('C');
+  renderSeats();
+  toast('策略已切换（运行时热切换，旧代码零修改）');
+}
+
+/* ---------------- toast ---------------- */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+initSeats(); renderSeats(); renderOrders();
+</script>
+</body>
+</html>
