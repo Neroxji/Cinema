@@ -1,0 +1,6 @@
+# GitHub 语言统计口径修正（2026-11-16）：
+# 原型为课程参考稿（非本项目产出），文档为过程性 prose——均不计入语言占比，
+# 让语言条反映真实代码构成：Java（后端+测试）、HTML（两端页面）、Python（压测脚本）、SQL。
+prototype/** linguist-vendored=true
+docs/** linguist-documentation=true
+*.md linguist-documentation=true
