@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 座位仓库（表 seat，并发核心表）。
@@ -81,4 +82,9 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
                                           @Param("expectedStatus") SeatState expectedStatus,
                                           @Param("toStatus") SeatState toStatus,
                                           @Param("expiredBefore") LocalDateTime expiredBefore);
+
+    // ===================== task-05 追加：候补递补与满座校验（UC304/305） =====================
+
+    /** 场次内指定状态的第一个座位（按 seat.id 升序）——满座校验取非 SOLD 位、递补取第一个空闲位。 */
+    Optional<Seat> findFirstByShowingIdAndStatusOrderByIdAsc(Long showingId, SeatState status);
 }

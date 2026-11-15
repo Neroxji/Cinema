@@ -61,8 +61,37 @@ public enum ErrorCode {
     /** 用户名已被注册（UC201 注册重名）。 */
     USERNAME_TAKEN(12006, "用户名已被注册，请更换用户名", HttpStatus.CONFLICT),
     /** 用户名或密码错误（UC201 登录失败，不区分具体原因防枚举）。 */
-    LOGIN_FAILED(12007, "用户名或密码错误", HttpStatus.UNAUTHORIZED);
-    // ---------- C 模块段 13xxx（预留：订单售后与通知） ----------
+    LOGIN_FAILED(12007, "用户名或密码错误", HttpStatus.UNAUTHORIZED),
+
+    // ---------- C 模块段 13xxx（订单售后与通知，task-05 启用） ----------
+    /** 订单当前状态不可退票（UC302-4a：仅"已出票且未检票"可退；已检票/已退票/已取消/待支付均拒绝）。 */
+    ORDER_NOT_REFUNDABLE(13001, "订单当前状态不可退票（仅已出票且未检票的订单可退）", HttpStatus.CONFLICT),
+    /** 已过退票截止（UC302-4b：开映前 BookingConfig.refundDeadline（默认 2 小时）停止受理退票）。 */
+    REFUND_DEADLINE_PASSED(13002, "已过退票截止（开映前 2 小时停止受理退票），不可退票", HttpStatus.CONFLICT),
+    /** 重复候补（UC304：同一用户同一场次存在排队中的候补记录，拒绝重复加入）。 */
+    QUEUE_ALREADY_JOINED(13003, "您已在该场次候补队列中排队，请勿重复候补", HttpStatus.CONFLICT),
+    /** 候补记录不存在或状态不符（UC305 claim：未收到递补/已递补/已过期/已取消的记录不可确认）。 */
+    QUEUE_RECORD_INVALID(13004, "候补记录不存在或状态不符，无法确认递补（请先等待递补通知）", HttpStatus.CONFLICT),
+    /** 递补确认超时（UC305：响应时限（BookingConfig.queueResponseLimit，默认 3 分钟）内未确认，已顺延下一位）。 */
+    QUEUE_CLAIM_EXPIRED(13005, "递补确认已超时（响应时限内未确认，资格已顺延下一位候补）", HttpStatus.CONFLICT),
+    /** 递补座位已被他人选购（UC305 claim 锁座时座位已非空闲，候选继续排队等下一次递补）。 */
+    QUEUE_SEAT_TAKEN(13006, "递补座位已被其他观众选购，请继续排队等待下一次递补", HttpStatus.CONFLICT),
+    /** 订单当前状态不可核销（UC307-3a：仅"已出票"可核销，待支付/已退票/已取消拒绝）。 */
+    CHECKIN_STATUS_MISMATCH(13007, "订单当前状态不可核销，仅已出票订单可核销入场", HttpStatus.CONFLICT),
+    /** 订单已检票重复核销（UC307-5a 幂等拒绝：核销仅一次生效，重复提交返回本码）。 */
+    CHECKIN_ALREADY_CHECKED_IN(13008, "订单已检票核销，请勿重复核销", HttpStatus.CONFLICT),
+    /** 开映超 30 分钟核销转人工（UC307-3b：超过宽限时段拒绝自助核销）。 */
+    CHECKIN_MANUAL_REQUIRED(13009, "本场次开映已超过 30 分钟，请转人工窗口处理", HttpStatus.CONFLICT),
+    /** 订单当前状态不可改签（UC303：仅"已出票"订单可改签）。 */
+    CHANGE_NOT_ALLOWED(13010, "订单当前状态不可改签（仅已出票的订单可改签）", HttpStatus.CONFLICT),
+    /** 已过改签截止（UC303：开映前 BookingConfig.refundDeadline（默认 2 小时）停止受理改签）。 */
+    CHANGE_DEADLINE_PASSED(13011, "已过改签截止（开映前 2 小时停止受理改签），不可改签", HttpStatus.CONFLICT),
+    /** 改签目标场次无效（UC303：须为同影片其他已发布、未开映且余座充足的场次）。 */
+    CHANGE_TARGET_INVALID(13012, "改签目标场次无效（须为同影片其他已发布、未开映且余座充足的场次）", HttpStatus.BAD_REQUEST),
+    /** 每单限改签一次（UC303 业务规则：change_from_showing_id 已留痕的订单拒绝二次改签）。 */
+    CHANGE_LIMIT_REACHED(13013, "每单仅限改签一次，本订单已改签过", HttpStatus.CONFLICT),
+    /** 场次不满足候补条件（UC304：仅"未开映的满座场次"可加入候补）。 */
+    QUEUE_JOIN_REJECTED(13014, "当前场次不满足候补条件（仅未开映的满座场次可加入候补）", HttpStatus.CONFLICT);
 
     private final int code;
 
