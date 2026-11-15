@@ -1,0 +1,12 @@
+# =====================================================================
+# 测试档（profile: api-test）· task-04 A5~A7 API 并发专项专用
+# 目的：API 层测试（RANDOM_PORT 真 HTTP）会产生真实提交的数据（注册用户/专用场次/
+#   锁座订单），与 I 系测试（@Transactional 回滚）共用同一 H2 内存库会互相污染
+#   （种子断言"账号=3"等将失败）。本档指向独立命名的内存库 cinema-api-test，
+#   由本档上下文自己的 DataSeeder 播种，隔离两套测试数据。
+# 其余配置（sql.init mode=always 重放 schema.sql / JPA ddl-auto=none /
+# BookingConfig 双档锁定时长）继承 application.yml 默认档。
+# =====================================================================
+spring:
+  datasource:
+    url: "jdbc:h2:mem:cinema-api-test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1"

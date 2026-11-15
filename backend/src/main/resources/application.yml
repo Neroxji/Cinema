@@ -56,6 +56,9 @@ cinema:
     pay-fail-rate: 0.0
     # 单笔订单最多选座数（UC204-3）
     max-seats-per-order: 4
+    # 锁定超时释放扫描间隔（UC206，task-04 追加）：@Scheduled fixedDelay 毫秒值，
+    # 默认 1000ms=1 秒（演示档实时性优先）；正式档可按需调大（如 5s）降低扫描频率
+    release-scan-interval-millis: 1000
 
 ---
 # ===================== MySQL 正式档（profile: mysql） =====================

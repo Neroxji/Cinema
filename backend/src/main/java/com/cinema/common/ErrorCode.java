@@ -45,8 +45,23 @@ public enum ErrorCode {
     /** 影片已下架，终止创建场次（UC103-5a）。 */
     MOVIE_OFF_SHOW(11007, "影片已下架，无法创建场次", HttpStatus.CONFLICT),
     /** 影厅不存在（UC103 创建场次时 id 无效）。 */
-    HALL_NOT_FOUND(11008, "影厅不存在", HttpStatus.NOT_FOUND);
-    // ---------- B 模块段 12xxx（预留：在线购票） ----------
+    HALL_NOT_FOUND(11008, "影厅不存在", HttpStatus.NOT_FOUND),
+
+    // ---------- B 模块段 12xxx（在线购票，task-04 启用） ----------
+    /** 模拟支付网关返回失败（UC205-3a）：订单保持待支付，座位维持锁定至倒计时结束。 */
+    PAY_GATEWAY_FAILED(12001, "支付失败，请稍后重试（座位锁定保持至倒计时结束）", HttpStatus.PAYMENT_REQUIRED),
+    /** 支付作废（UC205-4a）：支付时座位已被超时释放/订单已取消，模拟退款，提示重新选座。 */
+    PAY_VOID_SEAT_RELEASED(12002, "座位锁定已释放，支付已作废并退款，请重新选座", HttpStatus.CONFLICT),
+    /** 订单当前状态不可支付（已出票重复支付/已检票/已退票等，状态机拒绝）。 */
+    ORDER_NOT_PAYABLE(12003, "订单当前状态不可支付", HttpStatus.CONFLICT),
+    /** 订单不存在（支付/售后接口的 id 无效）。 */
+    ORDER_NOT_FOUND(12004, "订单不存在", HttpStatus.NOT_FOUND),
+    /** 非本人订单（越权支付，UC205 前置条件"本人订单"）。 */
+    ORDER_FORBIDDEN(12005, "无权操作他人订单", HttpStatus.FORBIDDEN),
+    /** 用户名已被注册（UC201 注册重名）。 */
+    USERNAME_TAKEN(12006, "用户名已被注册，请更换用户名", HttpStatus.CONFLICT),
+    /** 用户名或密码错误（UC201 登录失败，不区分具体原因防枚举）。 */
+    LOGIN_FAILED(12007, "用户名或密码错误", HttpStatus.UNAUTHORIZED);
     // ---------- C 模块段 13xxx（预留：订单售后与通知） ----------
 
     private final int code;

@@ -41,6 +41,13 @@ public class BookingConfig {
     /** 单笔订单最多选座数（UC204-3：单笔最多 4 座），默认 4。 */
     private Integer maxSeatsPerOrder = 4;
 
+    /**
+     * 锁定超时释放扫描间隔毫秒值（UC206，task-04 追加）：@Scheduled fixedDelayString
+     * 直接取用（普通属性占位符，与 Bean 命名无关，重启生效）。默认 1000ms=1 秒——
+     * 演示档实时性优先；修改配置不需改代码（NFR2）。
+     */
+    private Long releaseScanIntervalMillis = 1000L;
+
     public Duration getLockDuration() {
         return lockDuration;
     }
@@ -79,5 +86,13 @@ public class BookingConfig {
 
     public void setMaxSeatsPerOrder(Integer maxSeatsPerOrder) {
         this.maxSeatsPerOrder = maxSeatsPerOrder;
+    }
+
+    public Long getReleaseScanIntervalMillis() {
+        return releaseScanIntervalMillis;
+    }
+
+    public void setReleaseScanIntervalMillis(Long releaseScanIntervalMillis) {
+        this.releaseScanIntervalMillis = releaseScanIntervalMillis;
     }
 }
