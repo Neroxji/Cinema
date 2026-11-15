@@ -4,7 +4,7 @@
 |---|---|
 | 版本 / 状态 | v0.3 · 决策全部确认（待小组会背书后定稿） |
 | 依据 | 《PRD-需求规格说明书-初稿.md》v0.1（**PRD 尚未定稿，定稿后需复核本 spec**） |
-| 硬约束 | 单体 Spring Boot（controller/service/repository/model）；9 张表 MySQL（演示可 H2）；模式 7 种=状态(×2)/策略/观察者/命令/工厂/单例/模板方法；并发=先查后锁→@Version→唯一索引(valid_flag)→升序加锁→释放前复查 |
+| 硬约束 | 单体 Spring Boot（controller/service/repository/model）；9 张表：开发期 H2 文件库（MySQL 兼容模式，零安装），交付期 docker-compose（应用 + MySQL 8）一键部署；模式 7 种=状态(×2)/策略/观察者/命令/工厂/单例/模板方法；并发=先查后锁→@Version→唯一索引(valid_flag)→升序加锁→释放前复查 |
 | 用途 | ① 报告第四/五章底稿 ② AI 辅助编码上下文 |
 | 引用约定 | 一律以 UC 编号引用 PRD，不重复 PRD 内容 |
 
@@ -19,7 +19,7 @@
 | cinema_hall | 影厅与座位模板 | id, name, hall_type, rows, cols, zone_rule | 1:N showing；座位由工厂按模板生成（UC102/103） |
 | showing | 场次排片 | id, movie_id, hall_id, start_time, status, price_type, price_params | N:1 movie、cinema_hall；1:N seat、ticket_order、queue |
 | seat | 场次座位（并发核心表） | id, showing_id, row_num, col_num, zone, status, lock_expire_at, lock_user_id, version | N:1 showing；唯一索引(showing_id,row_num,col_num)；1:1 order_item |
-| ticket_order | 购票订单 | id, order_no, user_id, showing_id, status, total_amount, pay_time, checkin_time, change_from_showing_id(改签来源,可NULL) | N:1 user、showing；1:N order_item |
+| ticket_order | 购票订单 | id, order_no, pickup_code(取票码, 8位数字, 出票时生成, 全库唯一索引), user_id, showing_id, status, total_amount, pay_time, checkin_time, change_from_showing_id(改签来源,可NULL) | N:1 user、showing；1:N order_item |
 | order_item | 订单明细（票；防双卖唯一索引载体） | id, order_id, seat_id, price_snapshot, valid_flag(退票置NULL) | N:1 ticket_order；N:1 seat；唯一索引(seat_id, valid_flag) |
 | queue | 候补队列 | id, showing_id, user_id, rank, status(排队/已递补/过期/取消) | N:1 showing、user；座位释放时按 rank 递补（UC304/305） |
 | notification | 站内通知 | id, user_id, type, title, content, read_flag, created_at | N:1 user；由观察者订阅者写入（UC306） |
