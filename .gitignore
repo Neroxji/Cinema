@@ -10,6 +10,9 @@ target/
 *.db
 logs/
 
+# 过夜并行构建互斥锁（编排者工具，不入库）
+.mvn.lock
+
 # 本地环境配置
 application-local.yml
 
