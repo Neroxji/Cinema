@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>星辰影城 · 影片列表（观众端）</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f4f6f9; color: #2c3345; }
+  header { background: #1f2a44; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header .ver { font-size: 12px; opacity: .6; }
+  nav { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  nav .navbtn { background: rgba(255,255,255,.12); color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; text-decoration: none; }
+  nav .navbtn.active { background: #4a7dff; }
+  nav .navbtn:hover { background: rgba(255,255,255,.22); }
+  nav .navbtn.active:hover { background: #4a7dff; }
+  .navgroup { font-size: 11px; color: rgba(255,255,255,.45); padding: 0 2px; }
+  .authbox { display: flex; align-items: center; gap: 8px; }
+  .auth-name { font-size: 13px; }
+  #roleWarn { display: none; background: #fff4e0; color: #c07a12; font-size: 13px; padding: 8px 24px; }
+  main { max-width: 1080px; margin: 24px auto; padding: 0 16px; }
+  .page-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .page-head h2 { font-size: 17px; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; color: #fff; }
+  .badge.b { background: #2fa46b; }
+  .card { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 1px 4px rgba(20,30,60,.08); margin-bottom: 16px; }
+  .card h3 { font-size: 14px; margin-bottom: 10px; color: #5a6478; font-weight: 600; }
+  .grid-movies { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 900px) { .grid-movies { grid-template-columns: repeat(2, 1fr); } }
+  .movie { border: 1px solid #e6e9f0; border-radius: 8px; overflow: hidden; }
+  .poster { height: 150px; position: relative; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 26px; font-weight: 700; letter-spacing: 2px; }
+  .poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .movie .info { padding: 10px 12px; }
+  .movie .info b { font-size: 14px; }
+  .movie .info p { font-size: 12px; color: #8a93a6; margin-top: 4px; }
+  .movie button { width: calc(100% - 24px); margin: 0 12px 12px; padding: 8px; border: none; border-radius: 6px; background: #4a7dff; color: #fff; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #edf0f5; text-align: left; }
+  th { color: #8a93a6; font-weight: 500; background: #fafbfd; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+  .tag.paid { background: #e3f5ec; color: #1f8a5b; } .tag.unpaid { background: #fff4e0; color: #c07a12; }
+  .tag.refund { background: #fdeaea; color: #c0392b; } .tag.used { background: #e8ecf5; color: #5a6478; }
+  .btn { border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-size: 13px; }
+  .btn.small { padding: 4px 10px; font-size: 12px; }
+  .btn.primary { background: #4a7dff; color: #fff; }
+  .btn.ghost { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+  .btn:disabled { background: #c8cede; cursor: not-allowed; }
+  .empty { color: #a0a8ba; font-size: 13px; padding: 10px; }
+  .tips { font-size: 12px; color: #8a93a6; background: #f6f8fc; border-left: 3px solid #4a7dff; padding: 8px 12px; border-radius: 4px; margin-top: 12px; line-height: 1.7; }
+  /* 登录/注册弹层 */
+  .mask { position: fixed; inset: 0; background: rgba(15,22,40,.55); display: flex; align-items: center; justify-content: center; z-index: 50; }
+  .hidden { display: none !important; }
+  .authcard { width: 340px; background: #fff; border-radius: 10px; padding: 20px; }
+  .authtabs { display: flex; gap: 8px; margin-bottom: 6px; }
+  .authtabs button { flex: 1; padding: 8px; border: 1px solid #e6e9f0; background: #fafbfd; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .authtabs button.on { background: #4a7dff; color: #fff; border-color: #4a7dff; }
+  .authcard label { display: block; font-size: 12px; color: #5a6478; margin: 10px 0 4px; }
+  .authcard input { width: 100%; padding: 8px 10px; border: 1px solid #d5dbe8; border-radius: 6px; font-size: 13px; }
+  .auth-err { color: #c0392b; font-size: 12px; min-height: 16px; margin-top: 8px; }
+  .auth-tip { font-size: 11px; color: #8a93a6; margin-top: 10px; background: #f6f8fc; padding: 6px 8px; border-radius: 4px; line-height: 1.7; }
+  #toast { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); background: #1f2a44; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: .3s; pointer-events: none; z-index: 99; }
+  #toast.show { opacity: .95; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎬 星辰影城 · 在线购票系统</h1><span class="ver">观众端 · 对接真实 API（task-06）</span>
+  <nav>
+    <span class="navgroup">观众端</span>
+    <a class="navbtn active" href="index.html">① 影片列表</a>
+    <a class="navbtn" href="seats.html">② 选座购票</a>
+    <a class="navbtn" href="orders.html">③ 我的订单</a>
+    <a class="navbtn" href="notifications.html">④ 通知中心</a>
+    <span class="navgroup">管理端</span>
+    <a class="navbtn" href="admin.html">影片/排片/检票</a>
+  </nav>
+  <div class="authbox" id="authBox"></div>
+</header>
+<div id="roleWarn">⚠️ 当前登录的不是观众账号，观众端接口将提示无权限（10002）。请退出后使用观众账号（audience）登录。</div>
+
+<main>
+  <div class="page-head">
+    <h2>正在热映</h2><span class="badge b">模块 B · 在线购票核心</span>
+    <button class="btn small" id="refreshBtn" onclick="loadAll(true)">刷新</button>
+  </div>
+
+  <div class="card">
+    <div id="movieGrid" class="grid-movies"></div>
+    <p id="movieEmpty" class="empty" style="display:none"></p>
+  </div>
+
+  <div class="card">
+    <h3>场次速览（点「选座」进入购票；满座场可加入候补）</h3>
+    <table id="showingTable"><tr><th>开映时间</th><th>影片</th><th>影厅</th><th>票价</th><th>余座</th><th>状态</th><th>操作</th></tr></table>
+    <p id="showingEmpty" class="empty" style="display:none"></p>
+  </div>
+
+  <div class="tips" style="margin:0">💡 本页数据来自 <b>GET /api/movies</b>（上映中影片）与 <b>GET /api/showings/{id}/seats</b>（场次座位图）；点影片卡片或场次行进入选座购票页。演示账号：audience / audience123。</div>
+</main>
+
+<!-- 登录 / 注册弹层 -->
+<div class="mask hidden" id="authMask">
+  <div class="authcard">
+    <div class="authtabs">
+      <button id="tabLogin" class="on" onclick="switchAuthTab('login')">登录</button>
+      <button id="tabReg" onclick="switchAuthTab('reg')">注册新观众</button>
+    </div>
+    <form id="loginForm" onsubmit="doLogin(event)">
+      <label>用户名</label><input id="loginUsername" autocomplete="username">
+      <label>密码</label><input id="loginPassword" type="password" autocomplete="current-password">
+      <div class="auth-err" id="loginErr"></div>
+      <button class="btn primary" style="width:100%;margin-top:6px">登 录</button>
+    </form>
+    <form id="regForm" style="display:none" onsubmit="doRegister(event)">
+      <label>用户名（2~50 字）</label><input id="regUsername" autocomplete="username">
+      <label>密码（6~32 字）</label><input id="regPassword" type="password" autocomplete="new-password">
+      <label>手机号（选填）</label><input id="regPhone" maxlength="20">
+      <div class="auth-err" id="regErr"></div>
+      <button class="btn primary" style="width:100%;margin-top:6px">注 册</button>
+      <div class="auth-err" style="color:#8a93a6" id="regOk"></div>
+    </form>
+    <div class="auth-tip">演示账号：audience / audience123（观众）、scheduler / scheduler123（排片员，请去管理端使用）、checker / checker123（检票员）。注册成功不自动登录，请再用新账号登录。</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= 公共：请求外壳 / 工具 ================= */
+async function api(path, opts) {
+  opts = opts || {};
+  let res;
+  try {
+    res = await fetch(path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      credentials: 'same-origin'
+    });
+  } catch (e) { return { code: -1, message: '网络异常：' + e.message }; }
+  let json;
+  try { json = await res.json(); } catch (e) { json = { code: -1, message: 'HTTP ' + res.status }; }
+  return json;
+}
+function errText(r) { return (r && r.code !== undefined) ? ('[' + r.code + '] ' + (r.message || '请求失败')) : '请求失败'; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function parseIso(s) { return new Date(String(s).slice(0, 19)); }
+function fmtTime(iso) { var s = String(iso); return s.slice(5, 7) + '-' + s.slice(8, 10) + ' ' + s.slice(11, 16); }
+var toastTimer;
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 3200);
+}
+
+/* ================= 登录态（字段表 B 段：/api/auth/register + /api/auth/login） ================= */
+var AUTH_KEY = 'cinema.audience.auth';
+var ROLE_NAMES = { AUDIENCE: '观众', SCHEDULER: '排片员', CHECKER: '检票员' };
+function getAuth() { try { return JSON.parse(sessionStorage.getItem(AUTH_KEY)); } catch (e) { return null; } }
+function setAuth(a) { if (a) sessionStorage.setItem(AUTH_KEY, JSON.stringify(a)); else sessionStorage.removeItem(AUTH_KEY); renderAuth(); }
+function renderAuth() {
+  var box = document.getElementById('authBox'), a = getAuth();
+  if (a) {
+    box.innerHTML = '<span class="auth-name">👤 ' + esc(a.username) + '（' + (ROLE_NAMES[a.role] || esc(a.role)) + '）</span>' +
+      '<button class="btn small ghost" onclick="logout()">退出</button>';
+    document.getElementById('roleWarn').style.display = (a.role === 'AUDIENCE') ? 'none' : 'block';
+  } else {
+    box.innerHTML = '<button class="btn small primary" onclick="openAuth()">登录 / 注册</button>';
+    document.getElementById('roleWarn').style.display = 'none';
+  }
+}
+function openAuth() {
+  document.getElementById('authMask').classList.remove('hidden');
+  var a = getAuth();
+  document.getElementById('loginUsername').value = a && a.username || '';
+}
+function closeAuth() { document.getElementById('authMask').classList.add('hidden'); }
+function switchAuthTab(which) {
+  document.getElementById('tabLogin').classList.toggle('on', which === 'login');
+  document.getElementById('tabReg').classList.toggle('on', which === 'reg');
+  document.getElementById('loginForm').style.display = which === 'login' ? '' : 'none';
+  document.getElementById('regForm').style.display = which === 'reg' ? '' : 'none';
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('regErr').textContent = '';
+  document.getElementById('regOk').textContent = '';
+}
+async function doLogin(e) {
+  e.preventDefault();
+  var u = document.getElementById('loginUsername').value.trim(), p = document.getElementById('loginPassword').value;
+  if (!u || !p) { document.getElementById('loginErr').textContent = '请输入用户名与密码'; return; }
+  var r = await api('/api/auth/login', { method: 'POST', body: { username: u, password: p } });
+  if (r.code === 0 && r.data) {
+    setAuth(r.data); closeAuth();
+    toast('登录成功，欢迎 ' + r.data.username);
+    loadAll(false);
+  } else document.getElementById('loginErr').textContent = errText(r);
+}
+async function doRegister(e) {
+  e.preventDefault();
+  var u = document.getElementById('regUsername').value.trim(),
+      p = document.getElementById('regPassword').value,
+      ph = document.getElementById('regPhone').value.trim(),
+      body = { username: u, password: p };
+  if (ph) body.phone = ph;
+  var r = await api('/api/auth/register', { method: 'POST', body: body });
+  if (r.code === 0 && r.data) {
+    document.getElementById('regOk').textContent = '✔ 注册成功（userId=' + r.data.userId + '），请切换到「登录」页签登录';
+    document.getElementById('loginUsername').value = u;
+    toast('注册成功：' + r.data.username + '，请登录');
+  } else document.getElementById('regErr').textContent = errText(r);
+}
+function logout() {
+  /* 字段表无登出接口，仅清除本地登录态（服务端 Session 待自然过期，不发明接口） */
+  setAuth(null); toast('已退出登录'); loadAll(false);
+}
+/* 会话失效（10001）时统一引导登录 */
+function handleAuthLoss() { setAuth(null); openAuth(); }
+
+/* ================= 影片列表（GET /api/movies） ================= */
+var PALETTE = ['#3d5a80', '#7b4a8f', '#2f7a5d', '#a85632', '#31649b', '#8a4b62'];
+function priceLabel(pt, pp) {
+  try {
+    if (pt === 'ZONE_PRICING') return '分区 ¥' + pp.normalPrice + ' / 金 ¥' + pp.goldenPrice;
+    if (pt === 'MEMBER_DISCOUNT') return '会员 ¥' + pp.basePrice + '×' + pp.discount;
+    return '原价 ¥' + pp.basePrice;
+  } catch (e) { return '—'; }
+}
+function showingStatus(s) {
+  if (s.status === 'CANCELED') return { t: '已取消', c: 'refund', sellable: false };
+  if (s.status === 'FINISHED' || parseIso(s.startTime) <= new Date()) return { t: '已结束', c: 'used', sellable: false };
+  if (s.freeSeats <= 0) return { t: '已满座·可候补', c: 'unpaid', sellable: true };
+  return { t: '可售', c: 'paid', sellable: true };
+}
+function renderMovies(movies) {
+  var grid = document.getElementById('movieGrid'), empty = document.getElementById('movieEmpty');
+  grid.innerHTML = '';
+  empty.style.display = movies.length ? 'none' : 'block';
+  empty.textContent = movies.length ? '' : '暂无上映中影片。';
+  movies.forEach(function (m, i) {
+    var div = document.createElement('div');
+    div.className = 'movie';
+    var poster = '<div class="poster" style="background:' + PALETTE[i % PALETTE.length] + '">' +
+      (m.posterUrl ? '<img src="' + esc(m.posterUrl) + '" alt="" onerror="this.remove()">' : '') +
+      esc((m.title || '?').slice(0, 4)) + '</div>';
+    div.innerHTML = poster +
+      '<div class="info"><b>' + esc(m.title) + '</b><p>' + esc(m.genre || '—') + ' / ' + (m.durationMin ? m.durationMin + '分钟' : '—') + '</p></div>' +
+      '<button onclick="location.href=\'seats.html?movieId=' + m.id + '\'">选座购票</button>';
+    grid.appendChild(div);
+  });
+}
+function renderShowings(list) {
+  var tb = document.getElementById('showingTable'), empty = document.getElementById('showingEmpty');
+  tb.innerHTML = '<tr><th>开映时间</th><th>影片</th><th>影厅</th><th>票价</th><th>余座</th><th>状态</th><th>操作</th></tr>';
+  empty.style.display = list.length ? 'none' : 'block';
+  empty.textContent = list.length ? '' : (getAuth() ? '未探测到场次（观众端无场次列表接口，本页按座位图接口逐场次探测 1~60 组合）。' : '');
+  list.forEach(function (s) {
+    var st = showingStatus(s);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + fmtTime(s.startTime) + '</td>' +
+      '<td>' + esc(s.movieTitle) + '</td>' +
+      '<td>' + esc(s.hallName) + '</td>' +
+      '<td>' + priceLabel(s.priceType, s.priceParams) + '</td>' +
+      '<td>' + s.freeSeats + '/' + s.totalSeats + '</td>' +
+      '<td><span class="tag ' + st.c + '">' + st.t + '</span></td>' +
+      '<td>' + (st.sellable ? '<button class="btn small primary" onclick="location.href=\'seats.html?showingId=' + s.showingId + '\'">选座</button>' : '-') + '</td>';
+    tb.appendChild(tr);
+  });
+}
+
+/* 场次探测：观众端无「场次列表」接口（字段表 A 段排片列表仅排片员可用），
+   故按字段表口径仅用 GET /api/showings/{id}/seats 对 id 1~60 探测组合出可选场次 */
+var MAX_PROBE = 60;
+async function probeShowings() {
+  var list = [], jobs = [];
+  for (var i = 1; i <= MAX_PROBE; i++) {
+    (function (id) {
+      jobs.push(api('/api/showings/' + id + '/seats').then(function (r) {
+        if (r.code === 0 && r.data) list.push(r.data);
+      }).catch(function () {}));
+    })(i);
+  }
+  await Promise.all(jobs);
+  list.sort(function (a, b) { return String(a.startTime).localeCompare(String(b.startTime)) || (a.showingId - b.showingId); });
+  return list;
+}
+
+var loadSeq = 0;
+async function loadAll(showToastOnFail) {
+  var seq = ++loadSeq;
+  var moviesR = await api('/api/movies');
+  if (seq !== loadSeq) return;
+  if (moviesR.code === 10001) { handleAuthLoss(); renderMovies([]); document.getElementById('showingEmpty').style.display = 'block'; document.getElementById('showingEmpty').textContent = '请先登录后查看场次。'; return; }
+  if (moviesR.code !== 0) { toast(errText(moviesR)); return; }
+  renderMovies(moviesR.data || []);
+  var list = await probeShowings();
+  if (seq !== loadSeq) return;
+  renderShowings(list);
+  if (showToastOnFail) toast('已刷新：影片 ' + (moviesR.data || []).length + ' 部，场次 ' + list.length + ' 场');
+}
+
+renderAuth();
+loadAll(false);
+</script>
+</body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>星辰影城 · 选座购票（观众端）</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f4f6f9; color: #2c3345; }
+  header { background: #1f2a44; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header .ver { font-size: 12px; opacity: .6; }
+  nav { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  nav .navbtn { background: rgba(255,255,255,.12); color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; text-decoration: none; }
+  nav .navbtn.active { background: #4a7dff; }
+  nav .navbtn:hover { background: rgba(255,255,255,.22); }
+  nav .navbtn.active:hover { background: #4a7dff; }
+  .navgroup { font-size: 11px; color: rgba(255,255,255,.45); padding: 0 2px; }
+  .authbox { display: flex; align-items: center; gap: 8px; }
+  .auth-name { font-size: 13px; }
+  #roleWarn { display: none; background: #fff4e0; color: #c07a12; font-size: 13px; padding: 8px 24px; }
+  main { max-width: 1080px; margin: 24px auto; padding: 0 16px; }
+  .page-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .page-head h2 { font-size: 17px; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; color: #fff; }
+  .badge.b { background: #2fa46b; }
+  .card { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 1px 4px rgba(20,30,60,.08); margin-bottom: 16px; }
+  .showsel { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; margin-bottom: 14px; }
+  .showsel select { padding: 6px 8px; border: 1px solid #d5dbe8; border-radius: 6px; font-size: 13px; max-width: 520px; }
+  .screen { text-align: center; color: #b7bfd0; font-size: 12px; margin-bottom: 6px; }
+  .screen-line { height: 4px; width: 70%; margin: 0 auto 18px; background: linear-gradient(#dfe4ee, #f4f6f9); border-radius: 50%; }
+  #seatMap { display: grid; gap: 8px; justify-content: center; }
+  .seat { width: 34px; height: 30px; border-radius: 6px 6px 3px 3px; border: 1px solid #cfd6e4; background: #fff; cursor: pointer; font-size: 10px; color: #9aa3b5; }
+  .seat:hover { border-color: #4a7dff; }
+  .seat.golden { border-color: #d4a017; color: #a07808; }
+  .seat.selected { background: #2fa46b; border-color: #2fa46b; color: #fff; }
+  .seat.locked  { background: #f0ad4e; border-color: #f0ad4e; color: #fff; cursor: not-allowed; }
+  .seat.sold    { background: #d9534f; border-color: #d9534f; color: #fff; cursor: not-allowed; }
+  .legend { display: flex; gap: 18px; justify-content: center; margin-top: 14px; font-size: 12px; color: #8a93a6; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 14px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .paybar { display: flex; align-items: center; gap: 16px; margin-top: 16px; justify-content: center; flex-wrap: wrap; }
+  .timer { font-size: 18px; font-weight: 700; color: #e8862c; min-width: 60px; }
+  .lockpanel { margin-top: 16px; background: #f5f8ff; border: 1px solid #c9d6ff; border-radius: 8px; padding: 14px 16px; font-size: 13px; }
+  .lockpanel b.order { font-family: Consolas, monospace; }
+  .okpanel { margin-top: 16px; background: #f0fbf5; border: 1px solid #bfe6d2; border-radius: 8px; padding: 14px 16px; font-size: 13px; text-align: center; }
+  .pickup { font-size: 26px; font-weight: 800; letter-spacing: 6px; color: #1f8a5b; font-family: Consolas, monospace; margin: 6px 0; }
+  .queuebox { margin-top: 16px; background: #fff8ef; border: 1px solid #f0d9b5; border-radius: 8px; padding: 14px 16px; font-size: 13px; }
+  .claimline { margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .claimline input { width: 120px; padding: 6px 8px; border: 1px solid #d5dbe8; border-radius: 6px; font-size: 13px; }
+  .btn { border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-size: 13px; }
+  .btn.small { padding: 4px 10px; font-size: 12px; }
+  .btn.primary { background: #4a7dff; color: #fff; }
+  .btn.success { background: #2fa46b; color: #fff; }
+  .btn.warn { background: #fff; color: #c0392b; border: 1px solid #e5b4ae; }
+  .btn.ghost { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+  .btn:disabled { background: #c8cede; cursor: not-allowed; }
+  .tips { font-size: 12px; color: #8a93a6; background: #f6f8fc; border-left: 3px solid #4a7dff; padding: 8px 12px; border-radius: 4px; margin-top: 12px; line-height: 1.7; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+  .tag.paid { background: #e3f5ec; color: #1f8a5b; } .tag.unpaid { background: #fff4e0; color: #c07a12; }
+  .tag.refund { background: #fdeaea; color: #c0392b; } .tag.used { background: #e8ecf5; color: #5a6478; }
+  .mask { position: fixed; inset: 0; background: rgba(15,22,40,.55); display: flex; align-items: center; justify-content: center; z-index: 50; }
+  .hidden { display: none !important; }
+  .authcard { width: 340px; background: #fff; border-radius: 10px; padding: 20px; }
+  .authtabs { display: flex; gap: 8px; margin-bottom: 6px; }
+  .authtabs button { flex: 1; padding: 8px; border: 1px solid #e6e9f0; background: #fafbfd; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .authtabs button.on { background: #4a7dff; color: #fff; border-color: #4a7dff; }
+  .authcard label { display: block; font-size: 12px; color: #5a6478; margin: 10px 0 4px; }
+  .authcard input { width: 100%; padding: 8px 10px; border: 1px solid #d5dbe8; border-radius: 6px; font-size: 13px; }
+  .auth-err { color: #c0392b; font-size: 12px; min-height: 16px; margin-top: 8px; }
+  .auth-tip { font-size: 11px; color: #8a93a6; margin-top: 10px; background: #f6f8fc; padding: 6px 8px; border-radius: 4px; line-height: 1.7; }
+  #toast { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); background: #1f2a44; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: .3s; pointer-events: none; z-index: 99; }
+  #toast.show { opacity: .95; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎬 星辰影城 · 在线购票系统</h1><span class="ver">观众端 · 对接真实 API（task-06）</span>
+  <nav>
+    <span class="navgroup">观众端</span>
+    <a class="navbtn" href="index.html">① 影片列表</a>
+    <a class="navbtn active" href="seats.html">② 选座购票</a>
+    <a class="navbtn" href="orders.html">③ 我的订单</a>
+    <a class="navbtn" href="notifications.html">④ 通知中心</a>
+    <span class="navgroup">管理端</span>
+    <a class="navbtn" href="admin.html">影片/排片/检票</a>
+  </nav>
+  <div class="authbox" id="authBox"></div>
+</header>
+<div id="roleWarn">⚠️ 当前登录的不是观众账号，观众端接口将提示无权限（10002）。请退出后使用观众账号（audience）登录。</div>
+
+<main>
+  <div class="page-head">
+    <h2 id="showHead">选座购票</h2><span class="badge b">模块 B · 锁座并发核心</span>
+    <span class="tag used" id="sellTag"></span>
+  </div>
+
+  <div class="card">
+    <div class="showsel">
+      <span>场次：</span><select id="showingSel" onchange="onSwitchShowing(this.value)"></select>
+      <span id="selMeta" style="color:#8a93a6"></span>
+    </div>
+    <div class="screen">银 幕</div><div class="screen-line"></div>
+    <div id="seatMap"></div>
+    <div class="legend">
+      <span><i style="border:1px solid #cfd6e4"></i>可售</span>
+      <span><i style="border:1px solid #d4a017"></i>黄金区</span>
+      <span><i style="background:#2fa46b"></i>已选中</span>
+      <span><i style="background:#f0ad4e"></i>锁定中</span>
+      <span><i style="background:#d9534f"></i>已售</span>
+    </div>
+    <div id="paybar"></div>
+    <div id="queuePanel"></div>
+    <div class="tips">💡 座位图每 <b>3 秒</b>自动轮询刷新（spec §7.3）；最多选 <b>4</b> 座；锁座后按服务端返回的截止时间倒计时，超时座位自动释放。同场次再次锁座 = 改选（上一笔待支付订单自动取消）。演示档锁定 30 秒由服务端配置（cinema.booking.lock-duration）。</div>
+  </div>
+</main>
+
+<!-- 登录 / 注册弹层 -->
+<div class="mask hidden" id="authMask">
+  <div class="authcard">
+    <div class="authtabs">
+      <button id="tabLogin" class="on" onclick="switchAuthTab('login')">登录</button>
+      <button id="tabReg" onclick="switchAuthTab('reg')">注册新观众</button>
+    </div>
+    <form id="loginForm" onsubmit="doLogin(event)">
+      <label>用户名</label><input id="loginUsername" autocomplete="username">
+      <label>密码</label><input id="loginPassword" type="password" autocomplete="current-password">
+      <div class="auth-err" id="loginErr"></div>
+      <button class="btn primary" style="width:100%;margin-top:6px">登 录</button>
+    </form>
+    <form id="regForm" style="display:none" onsubmit="doRegister(event)">
+      <label>用户名（2~50 字）</label><input id="regUsername" autocomplete="username">
+      <label>密码（6~32 字）</label><input id="regPassword" type="password" autocomplete="new-password">
+      <label>手机号（选填）</label><input id="regPhone" maxlength="20">
+      <div class="auth-err" id="regErr"></div>
+      <button class="btn primary" style="width:100%;margin-top:6px">注 册</button>
+      <div class="auth-err" style="color:#8a93a6" id="regOk"></div>
+    </form>
+    <div class="auth-tip">演示账号：audience / audience123。注册成功不自动登录，请再用新账号登录。</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= 公共：请求外壳 / 工具 ================= */
+async function api(path, opts) {
+  opts = opts || {};
+  let res;
+  try {
+    res = await fetch(path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      credentials: 'same-origin'
+    });
+  } catch (e) { return { code: -1, message: '网络异常：' + e.message }; }
+  let json;
+  try { json = await res.json(); } catch (e) { json = { code: -1, message: 'HTTP ' + res.status }; }
+  return json;
+}
+function errText(r) { return (r && r.code !== undefined) ? ('[' + r.code + '] ' + (r.message || '请求失败')) : '请求失败'; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function parseIso(s) { return new Date(String(s).slice(0, 19)); }
+function fmtTime(iso) { var s = String(iso); return s.slice(5, 7) + '-' + s.slice(8, 10) + ' ' + s.slice(11, 16); }
+function money(v) { return '¥' + Number(v).toFixed(2); }
+var toastTimer;
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 3200);
+}
+
+/* ================= 登录态 ================= */
+var AUTH_KEY = 'cinema.audience.auth';
+var ROLE_NAMES = { AUDIENCE: '观众', SCHEDULER: '排片员', CHECKER: '检票员' };
+function getAuth() { try { return JSON.parse(sessionStorage.getItem(AUTH_KEY)); } catch (e) { return null; } }
+function setAuth(a) { if (a) sessionStorage.setItem(AUTH_KEY, JSON.stringify(a)); else sessionStorage.removeItem(AUTH_KEY); renderAuth(); }
+function renderAuth() {
+  var box = document.getElementById('authBox'), a = getAuth();
+  if (a) {
+    box.innerHTML = '<span class="auth-name">👤 ' + esc(a.username) + '（' + (ROLE_NAMES[a.role] || esc(a.role)) + '）</span>' +
+      '<button class="btn small ghost" onclick="logout()">退出</button>';
+    document.getElementById('roleWarn').style.display = (a.role === 'AUDIENCE') ? 'none' : 'block';
+  } else {
+    box.innerHTML = '<button class="btn small primary" onclick="openAuth()">登录 / 注册</button>';
+    document.getElementById('roleWarn').style.display = 'none';
+  }
+}
+function openAuth() { document.getElementById('authMask').classList.remove('hidden'); var a = getAuth(); document.getElementById('loginUsername').value = a && a.username || ''; }
+function closeAuth() { document.getElementById('authMask').classList.add('hidden'); }
+function switchAuthTab(which) {
+  document.getElementById('tabLogin').classList.toggle('on', which === 'login');
+  document.getElementById('tabReg').classList.toggle('on', which === 'reg');
+  document.getElementById('loginForm').style.display = which === 'login' ? '' : 'none';
+  document.getElementById('regForm').style.display = which === 'reg' ? '' : 'none';
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('regErr').textContent = '';
+  document.getElementById('regOk').textContent = '';
+}
+async function doLogin(e) {
+  e.preventDefault();
+  var u = document.getElementById('loginUsername').value.trim(), p = document.getElementById('loginPassword').value;
+  if (!u || !p) { document.getElementById('loginErr').textContent = '请输入用户名与密码'; return; }
+  var r = await api('/api/auth/login', { method: 'POST', body: { username: u, password: p } });
+  if (r.code === 0 && r.data) {
+    setAuth(r.data); closeAuth(); toast('登录成功，欢迎 ' + r.data.username);
+    boot(true);
+  } else document.getElementById('loginErr').textContent = errText(r);
+}
+async function doRegister(e) {
+  e.preventDefault();
+  var u = document.getElementById('regUsername').value.trim(), p = document.getElementById('regPassword').value,
+      ph = document.getElementById('regPhone').value.trim(), body = { username: u, password: p };
+  if (ph) body.phone = ph;
+  var r = await api('/api/auth/register', { method: 'POST', body: body });
+  if (r.code === 0 && r.data) {
+    document.getElementById('regOk').textContent = '✔ 注册成功（userId=' + r.data.userId + '），请切换到「登录」页签登录';
+    document.getElementById('loginUsername').value = u;
+    toast('注册成功：' + r.data.username + '，请登录');
+  } else document.getElementById('regErr').textContent = errText(r);
+}
+function logout() { setAuth(null); toast('已退出登录'); boot(true); }
+function handleAuthLoss() { setAuth(null); openAuth(); }
+
+/* ================= 票价口径（字段表-A模块 price_params 约定，仅用于展示；以下单 estimatedAmount 为准） ================= */
+function seatPrice(zone, pt, pp) {
+  try {
+    if (pt === 'ZONE_PRICING') return zone === 'GOLDEN' ? Number(pp.goldenPrice) : Number(pp.normalPrice);
+    if (pt === 'MEMBER_DISCOUNT') return +(pp.basePrice * pp.discount).toFixed(2);
+    return Number(pp.basePrice);
+  } catch (e) { return null; }
+}
+function priceLabel(pt, pp) {
+  try {
+    if (pt === 'ZONE_PRICING') return '分区计价 ¥' + pp.normalPrice + ' / 金 ¥' + pp.goldenPrice;
+    if (pt === 'MEMBER_DISCOUNT') return '会员折扣 ¥' + pp.basePrice + '×' + pp.discount;
+    return '全场原价 ¥' + pp.basePrice;
+  } catch (e) { return '票价策略：—'; }
+}
+
+/* ================= 页面状态 ================= */
+var MAX_PROBE = 60, POLL_MS = 3000, MAX_SEATS = 4;
+var showings = [];            // 探测到的场次（ShowingSeatMapResponse）
+var showingId = null;
+var cur = null;               // 当前座位图
+var selected = [];            // 已勾选的 seatId（number）
+var lockInfo = null;          // 锁座响应 LockOrderResponse / 递补响应 QueueClaimResponse
+var lockKind = '';            // 'lock' | 'claim'
+var pollTimer = null, countTimer = null;
+
+function findSeat(data, seatId) {
+  for (var i = 0; i < data.seats.length; i++) if (data.seats[i].seatId === seatId) return data.seats[i];
+  return null;
+}
+function sellable(data) {
+  return data.status === 'PUBLISHED' && parseIso(data.startTime) > new Date();
+}
+
+/* ================= 场次探测（观众端无场次列表接口，仅用座位图接口逐场次探测） ================= */
+async function probeShowings() {
+  var list = [], jobs = [];
+  for (var i = 1; i <= MAX_PROBE; i++) {
+    (function (id) {
+      jobs.push(api('/api/showings/' + id + '/seats').then(function (r) {
+        if (r.code === 0 && r.data) list.push(r.data);
+      }).catch(function () {}));
+    })(i);
+  }
+  await Promise.all(jobs);
+  list.sort(function (a, b) { return String(a.startTime).localeCompare(String(b.startTime)) || (a.showingId - b.showingId); });
+  return list;
+}
+
+function fillSelector() {
+  var sel = document.getElementById('showingSel');
+  sel.innerHTML = '';
+  showings.forEach(function (s) {
+    var st = sellable(s) ? (s.freeSeats > 0 ? '余 ' + s.freeSeats : '已满座') : (s.status === 'CANCELED' ? '已取消' : '已结束');
+    var opt = document.createElement('option');
+    opt.value = s.showingId;
+    opt.textContent = s.movieTitle + ' · ' + fmtTime(s.startTime) + ' · ' + s.hallName + '（' + st + '）';
+    sel.appendChild(opt);
+  });
+}
+
+function clearTimers() { clearInterval(pollTimer); clearInterval(countTimer); pollTimer = null; countTimer = null; }
+window.addEventListener('pagehide', clearTimers);
+window.addEventListener('beforeunload', clearTimers);
+
+async function boot(reloadList) {
+  if (reloadList || !showings.length) {
+    showings = await probeShowings();
+    fillSelector();
+    if (!showings.length) {
+      document.getElementById('showHead').textContent = '暂无可探测场次';
+      document.getElementById('seatMap').innerHTML = '';
+      document.getElementById('paybar').innerHTML = '<span class="tag used">请确认已登录（audience）且存在场次</span>';
+      return;
+    }
+  }
+  var params = new URLSearchParams(location.search);
+  var wantShowing = Number(params.get('showingId')), wantMovie = Number(params.get('movieId'));
+  var pick = null;
+  if (wantShowing) pick = showings.filter(function (s) { return s.showingId === wantShowing; })[0];
+  if (!pick && wantMovie) pick = showings.filter(function (s) { return s.movieId === wantMovie && sellable(s); })[0];
+  if (!pick) pick = showings.filter(sellable)[0] || showings[0];
+  loadShowing(pick.showingId);
+}
+
+async function loadShowing(id) {
+  clearTimers();
+  selected = []; lockInfo = null; lockKind = '';
+  showingId = id;
+  document.getElementById('showingSel').value = String(id);
+  var r = await api('/api/showings/' + id + '/seats');
+  if (r.code === 10001) { handleAuthLoss(); return; }
+  if (r.code !== 0) { toast(errText(r)); return; }
+  cur = r.data;
+  renderAll();
+  pollTimer = setInterval(pollOnce, POLL_MS);
+}
+
+async function pollOnce() {
+  if (!showingId) return;
+  var r = await api('/api/showings/' + showingId + '/seats');
+  if (r.code !== 0) return;               // 网络抖动/会话过期静默跳过，下一轮重试
+  cur = r.data;
+  /* 已勾选但尚未锁座的座位若被他人占用 → 自动移出选择 */
+  var dropped = [];
+  selected = selected.filter(function (sid) {
+    var seat = findSeat(cur, sid);
+    if (!seat || seat.status !== 'FREE') { dropped.push(seat ? seat.rowNum + '排' + seat.colNum + '座' : '#' + sid); return false; }
+    return true;
+  });
+  if (dropped.length) toast('座位 ' + dropped.join('、') + ' 已被他人占用，已自动移出选择');
+  renderAll();
+}
+
+function renderAll() {
+  renderHead(); renderSeatMap(); renderPaybar(); renderQueue();
+}
+
+function renderHead() {
+  var st = sellable(cur) ? (cur.freeSeats > 0 ? '' : '已满座') : (cur.status === 'CANCELED' ? '已取消' : '已结束');
+  var el = document.getElementById('showHead');
+  el.textContent = cur.movieTitle + ' · ' + fmtTime(cur.startTime) + ' · ' + cur.hallName;
+  var tag = document.getElementById('sellTag');
+  tag.textContent = (st || '可售') + ' · 空闲 ' + cur.freeSeats + '/' + cur.totalSeats + '（锁定 ' + cur.lockedSeats + ' · 已售 ' + cur.soldSeats + '）';
+  tag.className = 'tag ' + (st ? (st === '可售' ? 'used' : 'refund') : 'paid');
+  document.getElementById('selMeta').textContent = priceLabel(cur.priceType, cur.priceParams) + ' · 状态 ' + cur.status;
+}
+
+function renderSeatMap() {
+  var map = document.getElementById('seatMap');
+  var rows = 0, cols = 0;
+  cur.seats.forEach(function (s) { if (s.rowNum > rows) rows = s.rowNum; if (s.colNum > cols) cols = s.colNum; });
+  map.style.gridTemplateColumns = 'repeat(' + cols + ', 34px)';
+  map.innerHTML = '';
+  cur.seats.forEach(function (s) {
+    var b = document.createElement('button');
+    var cls = 'seat';
+    if (s.zone === 'GOLDEN') cls += ' golden';
+    if (selected.indexOf(s.seatId) >= 0) cls += ' selected';
+    else if (s.status === 'LOCKED') cls += ' locked';
+    else if (s.status === 'SOLD') cls += ' sold';
+    b.className = cls;
+    b.textContent = s.rowNum + '-' + s.colNum;
+    var price = seatPrice(s.zone, cur.priceType, cur.priceParams);
+    b.title = s.rowNum + '排' + s.colNum + '座 · ' + (s.zone === 'GOLDEN' ? '黄金区' : '普通区') + (price != null ? ' · ¥' + price.toFixed(2) : '');
+    if (s.status === 'FREE' || selected.indexOf(s.seatId) >= 0) b.onclick = function () { toggleSeat(s.seatId); };
+    map.appendChild(b);
+  });
+}
+
+function toggleSeat(seatId) {
+  var idx = selected.indexOf(seatId);
+  if (idx >= 0) selected.splice(idx, 1);
+  else {
+    var seat = findSeat(cur, seatId);
+    if (!seat || seat.status !== 'FREE') return;
+    if (selected.length >= MAX_SEATS) { toast('单笔订单最多选 ' + MAX_SEATS + ' 座（UC204-3）'); return; }
+    selected.push(seatId);
+  }
+  renderSeatMap(); renderPaybar();
+}
+
+function pickedLabel() {
+  return selected.map(function (sid) {
+    var s = findSeat(cur, sid);
+    return s ? s.rowNum + '排' + s.colNum + '座' : '#' + sid;
+  }).sort().join('、');
+}
+
+function renderPaybar() {
+  var bar = document.getElementById('paybar');
+  if (lockInfo) {
+    var seatDesc;
+    if (lockInfo.seats && lockInfo.seats.length) {
+      seatDesc = lockInfo.seats.map(function (s) { return s.rowNum + '排' + s.colNum + '座(' + (s.zone === 'GOLDEN' ? '金' : '普') + ' ¥' + Number(s.price).toFixed(2) + ')'; }).join('、');
+    } else if (lockInfo.seatId) {
+      seatDesc = '递补座位 #' + lockInfo.seatId;
+    } else seatDesc = '—';
+    bar.innerHTML =
+      '<div class="lockpanel" style="width:100%">' +
+      '<div>待支付订单：<b class="order">' + esc(lockInfo.orderNo) + '</b>（orderId=' + lockInfo.orderId + ' · ' + (lockKind === 'claim' ? '候补递补' : '锁座') + '）</div>' +
+      '<div style="margin-top:6px">座位：' + seatDesc + '</div>' +
+      '<div style="margin-top:6px">应付：<b style="color:#e8862c">' + money(lockInfo.estimatedAmount) + '</b>' +
+      '　倒计时：<span class="timer" id="cdTime">--:--</span>' +
+      '　<button class="btn success" id="payBtn" onclick="doPay()">模拟支付</button>' +
+      '　<button class="btn warn" onclick="reselect()">重新选座</button>' +
+      '（超时未支付座位将由服务端自动释放）</div></div>';
+    startCountdown();
+  } else {
+    var total = 0, ok = selected.length > 0;
+    selected.forEach(function (sid) {
+      var s = findSeat(cur, sid);
+      var p = s ? seatPrice(s.zone, cur.priceType, cur.priceParams) : null;
+      if (p != null) total += p;
+    });
+    bar.innerHTML =
+      '<span>已选（' + selected.length + '/' + MAX_SEATS + '）：<b>' + (selected.length ? esc(pickedLabel()) : '未选择') + '</b></span>' +
+      '<span>预估合计：<b style="color:#e8862c">' + money(total) + '</b></span>' +
+      '<span class="timer">--:--</span>' +
+      '<button class="btn primary" id="lockBtn" onclick="doLock()" ' + (ok && sellable(cur) ? '' : 'disabled') + '>立即锁座</button>' +
+      (selected.length ? '<span style="font-size:12px;color:#8a93a6">预估价按票价策略口径展示，以下单返回的应付金额为准</span>' : '');
+  }
+}
+
+/* ================= 锁座（POST /api/showings/{id}/seats/lock） ================= */
+async function doLock() {
+  if (!selected.length) return;
+  var btn = document.getElementById('lockBtn'); if (btn) btn.disabled = true;
+  var r = await api('/api/showings/' + showingId + '/seats/lock', { method: 'POST', body: { seatIds: selected.slice() } });
+  if (r.code === 0 && r.data) {
+    lockInfo = r.data; lockKind = 'lock'; selected = [];
+    renderAll();
+    toast('锁座成功，请在倒计时内完成支付');
+  } else {
+    if (btn) btn.disabled = false;
+    if (r.code === 10005) { toast('座位已被占用（并发锁座失败），请刷新座位图后重试'); await loadShowing(showingId); }
+    else if (r.code === 10001) handleAuthLoss();
+    else toast(errText(r));
+  }
+}
+
+function reselect() {
+  lockInfo = null; lockKind = ''; clearInterval(countTimer);
+  renderPaybar(); renderSeatMap();
+  toast('已回到选座；未支付的待支付订单将在超时后自动释放，或同场次再次锁座自动改选');
+}
+
+function startCountdown() {
+  clearInterval(countTimer);
+  countTimer = setInterval(function () {
+    var el = document.getElementById('cdTime');
+    if (!el || !lockInfo) { clearInterval(countTimer); return; }
+    var remain = Math.floor((parseIso(lockInfo.lockExpireAt) - new Date()) / 1000);
+    if (remain <= 0) {
+      clearInterval(countTimer);
+      el.textContent = '00:00';
+      toast('⏰ 锁定超时，座位已由服务端自动释放');
+      lockInfo = null; lockKind = '';
+      loadShowing(showingId);
+      return;
+    }
+    el.textContent = String(Math.floor(remain / 60)).padStart(2, '0') + ':' + String(remain % 60).padStart(2, '0');
+  }, 1000);
+}
+
+/* ================= 支付出票（POST /api/orders/{id}/pay） ================= */
+async function doPay() {
+  if (!lockInfo) return;
+  var btn = document.getElementById('payBtn'); if (btn) btn.disabled = true;
+  var orderId = lockInfo.orderId;
+  var r = await api('/api/orders/' + orderId + '/pay', { method: 'POST', body: {} });
+  if (r.code === 0 && r.data) {
+    var d = r.data;
+    document.getElementById('paybar').innerHTML =
+      '<div class="okpanel" style="width:100%">' +
+      '<div>🎉 出票成功！请凭取票码入场检票</div>' +
+      '<div class="pickup">' + esc(d.pickupCode) + '</div>' +
+      '<div>订单号 ' + esc(d.orderNo) + ' · 实付 ' + money(d.paidAmount) + ' · 支付时间 ' + fmtTime(d.payTime) + '</div>' +
+      '<div style="margin-top:8px"><a class="btn small primary" style="text-decoration:none" href="orders.html">查看我的订单</a> ' +
+      '<a class="btn small" style="text-decoration:none;background:#e8ecf5;color:#2c3345" href="notifications.html">通知中心</a></div></div>';
+    lockInfo = null; lockKind = ''; clearInterval(countTimer);
+    toast('支付成功，已出票（取票码 ' + d.pickupCode + '）');
+    pollOnce();
+  } else {
+    if (btn) btn.disabled = false;
+    if (r.code === 12001) toast('[12001] 模拟支付网关失败：订单保持待支付，倒计时内可重试');
+    else if (r.code === 12002) { toast('[12002] 支付作废：座位已被超时释放/订单已取消，请重新选座'); lockInfo = null; lockKind = ''; clearInterval(countTimer); await loadShowing(showingId); }
+    else if (r.code === 12003) { toast(errText(r)); lockInfo = null; lockKind = ''; clearInterval(countTimer); await loadShowing(showingId); }
+    else if (r.code === 10001) handleAuthLoss();
+    else toast(errText(r));
+  }
+}
+
+/* ================= 候补与递补（POST /api/showings/{id}/queue、POST /api/queue/{id}/claim） ================= */
+function renderQueue() {
+  var box = document.getElementById('queuePanel');
+  if (!cur) { box.innerHTML = ''; return; }
+  var full = cur.freeSeats <= 0;
+  if (!(sellable(cur) && full)) {
+    box.innerHTML = (sellable(cur) ? '' :
+      '<div class="queuebox">本场次状态为 ' + esc(cur.status) + '，不可购买（满座场若未开映可加入候补）。</div>');
+    return;
+  }
+  box.innerHTML =
+    '<div class="queuebox">' +
+    '<b>本场已满座（' + cur.soldSeats + '/' + cur.totalSeats + '）</b>　' +
+    '<button class="btn warn" id="queueBtn" onclick="joinQueue()">加入候补</button>' +
+    '<div style="margin-top:8px;color:#8a93a6">候补成功后，若有人退票/超时释放，将按候补序号收到递补邀请（站内通知，3 分钟内确认有效）。' +
+    '已收到递补通知？凭通知里的候补编号 Q 确认递补：</div>' +
+    '<div class="claimline"><input id="claimQueueId" placeholder="候补编号 Q，如 1"><button class="btn small primary" onclick="doClaim()">确认递补</button></div>' +
+    '</div>';
+}
+
+async function joinQueue() {
+  var btn = document.getElementById('queueBtn'); if (btn) btn.disabled = true;
+  var r = await api('/api/showings/' + showingId + '/queue', { method: 'POST', body: {} });
+  if (r.code === 0 && r.data) {
+    toast('候补成功！候补序号 #' + r.data.rank + '（Q' + r.data.queueId + '），递补邀请将发到通知中心');
+    document.getElementById('claimQueueId').value = r.data.queueId;
+  } else {
+    if (btn) btn.disabled = false;
+    if (r.code === 13003) toast('[13003] 您已在该场次候补排队中，无需重复加入');
+    else if (r.code === 10001) handleAuthLoss();
+    else toast(errText(r));
+  }
+}
+
+async function doClaim() {
+  var input = document.getElementById('claimQueueId');
+  var qid = input && input.value.trim();
+  if (!qid) { toast('请输入候补编号 Q（见递补邀请通知）'); return; }
+  var r = await api('/api/queue/' + encodeURIComponent(qid) + '/claim', { method: 'POST', body: {} });
+  if (r.code === 0 && r.data) {
+    var d = r.data;
+    toast('递补确认成功！已为您锁定座位并创建待支付订单');
+    if (d.showingId !== showingId) { await loadShowing(d.showingId); }
+    lockInfo = d; lockKind = 'claim'; selected = [];
+    renderAll();
+  } else {
+    if (r.code === 13004) toast('[13004] ' + (r.message || '候补记录无效：未收到递补邀请或状态不符'));
+    else if (r.code === 13005) toast('[13005] 递补确认超时，资格已顺延下一位');
+    else if (r.code === 13006) toast('[13006] 递补座位已被他人选购，您的候补仍在排队中');
+    else if (r.code === 10001) handleAuthLoss();
+    else toast(errText(r));
+  }
+}
+
+function onSwitchShowing(v) {
+  var id = Number(v);
+  if (!id || id === showingId) return;
+  if (lockInfo) toast('提示：当前存在待支付订单，超时未支付将由服务端自动释放');
+  loadShowing(id);
+}
+
+/* ================= 启动 ================= */
+renderAuth();
+boot(true);
+</script>
+</body>
+</html>
