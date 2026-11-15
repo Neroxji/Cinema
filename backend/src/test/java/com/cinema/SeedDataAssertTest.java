@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -52,10 +53,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * <p>以 H2 内存库（MySQL 兼容模式）+ schema.sql 建表 + DataSeeder 播种的真实上下文启动为前提，
  * 同时充当 NFR3"一键启动"的上下文启动证据。测试只读（@Transactional 回滚），不影响播种数据。
+ *
+ * <p>数据库隔离（task-01 打回修复）：演示档默认已切 H2 文件库（backend/data/booking），
+ * 测试通过 @ActiveProfiles("test") + application-test.yml 强制走独立 H2 内存库，
+ * 不读写文件库，断言语义不变。
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @Transactional
-@DisplayName("种子数据断言（schema.sql + DataSeeder + H2 演示档）")
+@DisplayName("种子数据断言（schema.sql + DataSeeder + H2 内存库 test 档）")
 class SeedDataAssertTest {
 
     /** 满座场（IMAX 分区计价）黄金区快照价。 */
@@ -186,6 +192,13 @@ class SeedDataAssertTest {
         assertNull(order.getCheckinTime(), "未检票，核销时间应为空");
         assertNull(order.getChangeFromShowingId(), "非改签单，改签来源应为空");
         assertNotNull(order.getOrderNo());
+
+        // 取票码（spec §1 / 测试计划 U8 / PRD UC307）：已出票订单应已有取票码，且为 8 位数字
+        assertNotNull(order.getPickupCode(), "已出票订单应已有取票码");
+        assertTrue(order.getPickupCode().matches("^\\d{8}$"),
+                "取票码应为 8 位数字，实际：" + order.getPickupCode());
+        assertEquals(DataSeeder.SEED_PICKUP_CODE, order.getPickupCode(),
+                "种子取票码应为 DataSeeder 写死常量（便于验收核对）");
 
         // 有效明细：每张已售座位有且仅有一条 valid_flag=1 的明细
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());

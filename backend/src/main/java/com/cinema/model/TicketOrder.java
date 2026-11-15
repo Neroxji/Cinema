@@ -35,6 +35,14 @@ public class TicketOrder {
     @Column(name = "order_no", length = 32, nullable = false)
     private String orderNo;
 
+    /**
+     * 取票码（spec §1：8 位数字，出票时生成；待支付订单尚无码故可 NULL）。
+     * 全库唯一索引 uk_ticket_order_pickup_code（唯一索引对多行 NULL 行为：MySQL 与 H2 一致，NULL 不参与比对）。
+     * 检票核销可凭取票码或订单号检索（@UseCase: UC307）。出票时的码生成逻辑属 task-04。
+     */
+    @Column(name = "pickup_code", length = 8)
+    private String pickupCode;
+
     /** 下单用户。 */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -83,6 +91,14 @@ public class TicketOrder {
 
     public void setOrderNo(String orderNo) {
         this.orderNo = orderNo;
+    }
+
+    public String getPickupCode() {
+        return pickupCode;
+    }
+
+    public void setPickupCode(String pickupCode) {
+        this.pickupCode = pickupCode;
     }
 
     public User getUser() {

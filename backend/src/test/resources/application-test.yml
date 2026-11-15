@@ -1,0 +1,12 @@
+# =====================================================================
+# 测试档（profile: test，@ActiveProfiles("test") 激活）· task-01 打回修复
+# 目的：与演示档 H2 文件库（backend/data/booking）隔离——
+#   测试一律使用独立 H2 内存库，不读写 backend/data/ 下的文件库文件，
+#   保证种子断言测试可重复、不污染演示数据。
+# 仅覆盖 datasource.url；驱动/账号/sql.init(mode=always，重放 schema.sql)/
+# JPA(ddl-auto=none) 等其余配置继承 application.yml 默认档。
+# =====================================================================
+spring:
+  datasource:
+    # 独立内存库（库名加 -test 后缀以示区分），兼容参数与演示档完全一致
+    url: "jdbc:h2:mem:cinema-test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1"

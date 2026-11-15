@@ -62,6 +62,12 @@ public class DataSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
 
+    /**
+     * 满座场已出票订单的种子取票码（8 位数字，spec §1 / 测试计划 U8；写死便于 SeedDataAssertTest 断言）。
+     * 真实业务的取票码生成逻辑属 task-04（出票时生成），此处仅为演示数据赋值。
+     */
+    public static final String SEED_PICKUP_CODE = "86420195";
+
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
     private final MovieRepository movieRepository;
@@ -200,13 +206,15 @@ public class DataSeeder implements ApplicationRunner {
     /**
      * 满座场（UC304/305 演示前置）：全部座位置"已售"，并生成一笔自洽的"已出票"订单。
      * 自洽性：每张已售座位有且仅有一条有效明细（valid_flag=1，满足唯一索引
-     * uk_order_item_seat_valid）；快照价与该场次分区计价策略一致；订单总额=明细之和。
+     * uk_order_item_seat_valid）；快照价与该场次分区计价策略一致；订单总额=明细之和；
+     * 已出票订单随单生成 8 位数字取票码（SEED_PICKUP_CODE，UC307）。
      */
     private void seedFullHouseShowing(Showing showing, User buyer) {
         List<Seat> seats = seatRepository.findByShowingId(showing.getId());
 
         TicketOrder order = new TicketOrder();
         order.setOrderNo("SEED" + DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now()));
+        order.setPickupCode(SEED_PICKUP_CODE);
         order.setUser(buyer);
         order.setShowing(showing);
         order.setStatus(OrderState.ISSUED);
@@ -230,8 +238,8 @@ public class DataSeeder implements ApplicationRunner {
         ticketOrderRepository.save(order);
         orderItemRepository.saveAll(items);
 
-        log.info("[DataSeeder] 满座场播种完成：showingId={}，座位 {} 张全部已售，订单 {}（金额 {}）",
-                showing.getId(), seats.size(), order.getOrderNo(), order.getTotalAmount());
+        log.info("[DataSeeder] 满座场播种完成：showingId={}，座位 {} 张全部已售，订单 {}（金额 {}，取票码 {}）",
+                showing.getId(), seats.size(), order.getOrderNo(), order.getTotalAmount(), order.getPickupCode());
     }
 
     /**

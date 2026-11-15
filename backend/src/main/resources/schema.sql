@@ -9,6 +9,8 @@
 --   2. `user`/`rows`/`rank` 为 H2/MySQL 保留字，统一反引号转义（H2 MySQL 模式支持反引号）；
 --   3. 索引/约束一律用具名 CONSTRAINT ... UNIQUE / FOREIGN KEY 语法，双方言均可解析；
 --   4. MySQL 8 侧本机无库，未实测（如实标注）；MySQL 侧务必以 utf8mb4 建库。
+--   5. 全表 CREATE TABLE IF NOT EXISTS：幂等可重跑——H2 文件库（演示档）重复启动时
+--      SQL init 重放本脚本不再炸"表已存在"；MySQL 侧手工重跑同样安全。
 -- =====================================================================
 
 -- 1. 用户表：三类角色账户（观众/排片员/检票员），被 ticket_order / queue / notification 引用
@@ -78,6 +80,7 @@ CREATE TABLE IF NOT EXISTS seat (
 CREATE TABLE IF NOT EXISTS ticket_order (
     id                     BIGINT        NOT NULL AUTO_INCREMENT, -- 主键
     order_no               VARCHAR(32)   NOT NULL,                -- 订单号（唯一；检票可凭订单号 UC307）
+    pickup_code            VARCHAR(8)    NULL,                    -- 取票码（8位数字，出票时生成；待支付订单尚无码故可 NULL，检票凭取票码核销 UC307）
     user_id                BIGINT        NOT NULL,                -- 下单用户
     showing_id             BIGINT        NOT NULL,                -- 所属场次（改签后指向新场次）
     status                 VARCHAR(20)   NOT NULL,                -- PENDING_PAYMENT/ISSUED/CHECKED_IN/REFUNDED/CANCELED
@@ -87,6 +90,10 @@ CREATE TABLE IF NOT EXISTS ticket_order (
     change_from_showing_id BIGINT        NULL,                    -- 改签来源场次（可空；不设外键保留历史可读性）
     CONSTRAINT pk_ticket_order PRIMARY KEY (id),
     CONSTRAINT uk_ticket_order_no UNIQUE (order_no),
+    -- 取票码全库唯一索引（spec §1）：MySQL 与 H2 的唯一索引对多行 NULL 行为一致
+    -- （NULL 互不相等、不参与唯一比对），故待支付/退票单 pickup_code=NULL 可多行并存，
+    -- 不影响唯一性；一旦出票写入码值即全库唯一。
+    CONSTRAINT uk_ticket_order_pickup_code UNIQUE (pickup_code),
     CONSTRAINT fk_order_user    FOREIGN KEY (user_id)    REFERENCES `user` (id),
     CONSTRAINT fk_order_showing FOREIGN KEY (showing_id) REFERENCES showing (id)
 );
